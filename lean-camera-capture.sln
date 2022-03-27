@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LeanCameraCapture", "src\LeanCameraCapture\LeanCameraCapture.vcxproj", "{69B168FF-CE7C-4B88-AB4A-7625635AEEDE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{69B168FF-CE7C-4B88-AB4A-7625635AEEDE}.Debug|x64.ActiveCfg = Debug|x64
+		{69B168FF-CE7C-4B88-AB4A-7625635AEEDE}.Debug|x64.Build.0 = Debug|x64
+		{69B168FF-CE7C-4B88-AB4A-7625635AEEDE}.Debug|x86.ActiveCfg = Debug|Win32
+		{69B168FF-CE7C-4B88-AB4A-7625635AEEDE}.Debug|x86.Build.0 = Debug|Win32
+		{69B168FF-CE7C-4B88-AB4A-7625635AEEDE}.Release|x64.ActiveCfg = Release|x64
+		{69B168FF-CE7C-4B88-AB4A-7625635AEEDE}.Release|x64.Build.0 = Release|x64
+		{69B168FF-CE7C-4B88-AB4A-7625635AEEDE}.Release|x86.ActiveCfg = Release|Win32
+		{69B168FF-CE7C-4B88-AB4A-7625635AEEDE}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A5764C12-0780-494D-B7B0-FC06B1E5BD46}
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,17 @@
+<!--
+  ***********************************
+  Directory.Build.targets
+
+  Added at the end of the build process
+
+  MSBuild root configurations
+  ***********************************
+-->
+<Project>
+  <!-- Don't include launchsettings.json in the build output because we are consolidating the output in one folder -->
+  <!-- https://github.com/dotnet/sdk/blob/3e4ea07af4f44b89db53293490baee600229fdc7/src/WebSdk/Worker/Targets/Microsoft.NET.Sdk.Worker.props#L32 -->
+  <ItemGroup>
+    <Content Remove="**\launchsettings.json" />
+    <None Include="**\launchsettings.json" CopyToOutputDirectory="Never" />
+  </ItemGroup>
+</Project>
