@@ -57,6 +57,13 @@
     <OutputPath>$(OutDir)</OutputPath>
   </PropertyGroup>
 
+    <!-- Demo output path -->
+  <PropertyGroup Condition="$(MSBuildProjectDirectory.Contains('demos'))">
+    <!-- OutDir is the property for the C/C++ projects -->
+    <OutDir>$(MSBuildThisFileDirectory)$(CustomOutputFolderName)$(Configuration)\$(Platform)\demos\$(MSBuildProjectName)\</OutDir>
+    <OutputPath>$(OutDir)</OutputPath>
+  </PropertyGroup>
+  
   <!-- Publish path, set IsPublishable to false to exclude project from being published -->
   <PropertyGroup>
     <PublishDir>$(MSBuildThisFileDirectory)$(CustomPublishFolderName)$(Version)\$(Configuration)\$(Platform)\$(ProjectRootName)\</PublishDir>
