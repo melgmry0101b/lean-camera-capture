@@ -32,7 +32,7 @@
     <VersionMinor>1</VersionMinor>
     <VersionPatch>0</VersionPatch>
     <!-- Always add '-' (dash) before VersionPrerelease for semantic versioning -->
-    <VersionPrerelease>-dev.1</VersionPrerelease>
+    <VersionPrerelease>-dev.2</VersionPrerelease>
     <!-- ====== Only change before this line ====== -->
 
     <VersionDate>$([System.DateTime]::UtcNow.ToString("yyyyMMddHHmmss"))</VersionDate>
