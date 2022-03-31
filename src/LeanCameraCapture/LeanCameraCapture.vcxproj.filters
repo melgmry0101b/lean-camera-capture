@@ -21,9 +21,36 @@
     <ClInclude Include="macros.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CameraCaptureDevice.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="leancamercapture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="saferelease.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mfmethods.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraCaptureException.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraCaptureManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraCaptureDevice.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mfmethods.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraCaptureManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

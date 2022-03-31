@@ -12,12 +12,45 @@ namespace LeanCameraCapture.Demos.WinForms
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        private static void Main()
         {
+            try
+            {
+                CameraCaptureManager.Start();
+            }
+            catch (CameraCaptureException ex)
+            {
+                MessageBox.Show(
+                    "Error occurred starting CameraCaptureManager.\r\n" + ex.ToString(),
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+
+            Application.ApplicationExit += Application_ApplicationExit;
+
             Application.SetHighDpiMode(HighDpiMode.SystemAware);
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new MainForm());
+        }
+
+        private static void Application_ApplicationExit(object sender, EventArgs e)
+        {
+            try
+            {
+                CameraCaptureManager.Stop();
+            }
+            catch (CameraCaptureException ex)
+            {
+                MessageBox.Show(
+                    "Error occurred stopping CameraCaptureManager.\r\n" + ex.ToString(),
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
         }
     }
 }
