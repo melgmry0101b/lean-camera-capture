@@ -28,6 +28,9 @@
 #include "saferelease.h"
 #include "mfmethods.h"
 
+#include "CSourceReader.h"
+
 #include "CameraCaptureException.hpp"
 #include "CameraCaptureManager.h"
 #include "CameraCaptureDevice.h"
+#include "CameraCaptureReader.h"

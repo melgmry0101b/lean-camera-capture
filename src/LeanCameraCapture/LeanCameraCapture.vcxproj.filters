@@ -39,6 +39,12 @@
     <ClInclude Include="CameraCaptureManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="CameraCaptureReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CSourceReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">
@@ -51,6 +57,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CameraCaptureManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraCaptureReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CSourceReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

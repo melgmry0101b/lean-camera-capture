@@ -148,6 +148,8 @@
     <ClInclude Include="CameraCaptureDevice.h" />
     <ClInclude Include="CameraCaptureException.hpp" />
     <ClInclude Include="CameraCaptureManager.h" />
+    <ClInclude Include="CameraCaptureReader.h" />
+    <ClInclude Include="CSourceReader.h" />
     <ClInclude Include="leancamercapture.h" />
     <ClInclude Include="macros.h" />
     <ClInclude Include="mfmethods.h" />
@@ -158,6 +160,8 @@
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="CameraCaptureDevice.cpp" />
     <ClCompile Include="CameraCaptureManager.cpp" />
+    <ClCompile Include="CameraCaptureReader.cpp" />
+    <ClCompile Include="CSourceReader.cpp" />
     <ClCompile Include="mfmethods.cpp" />
   </ItemGroup>
   <ItemGroup>
