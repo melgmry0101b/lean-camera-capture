@@ -66,16 +66,7 @@ ReadOnlyCollection<CameraCaptureDevice ^> ^CameraCaptureDevice::GetCameraCapture
     List<CameraCaptureDevice ^> ^cameraCaptureDevices = gcnew List<CameraCaptureDevice ^>();
     for (UINT32 i = 0; i < devicesCount; i++)
     {
-        try
-        {
-            cameraCaptureDevices->Add(gcnew CameraCaptureDevice{ ppDevices[i] });
-        }
-        catch (CameraCaptureException ^)
-        {
-            // Ignore the device that caused the exception
-            SafeRelease(&ppDevices[i]);
-            continue;
-        }
+        cameraCaptureDevices->Add(gcnew CameraCaptureDevice{ ppDevices[i] });
     }
 
 done:
@@ -83,12 +74,13 @@ done:
 
     CoTaskMemFree(ppDevices);
 
+    for (UINT32 i = 0; i < devicesCount; i++)
+    {
+        SafeRelease(&ppDevices[i]);
+    }
+
     if (FAILED(hr))
     {
-        for (UINT32 i = 0; i < devicesCount; i++)
-        {
-            SafeRelease(&ppDevices[i]);
-        }
         throw gcnew CameraCaptureException{ hr, errorMsg };
     }
 
@@ -100,6 +92,8 @@ CameraCaptureDevice::CameraCaptureDevice(IMFActivate *device) :
 {
     assert(device != nullptr);
     assert(CameraCaptureManager::Started == true);
+
+    device->AddRef();
 
     HRESULT hr{ S_OK };
     WCHAR *pwszDeviceFriendlyName{ nullptr };
