@@ -127,7 +127,7 @@ CameraCaptureDevice::!CameraCaptureDevice()
 
     // Assigning to a local variable avoiding
     //  Error C2784 "could not deduce template argument for 'T **' from 'cli::interior_ptr<IMFActivate *>'"
-    IMFActivate *pDevice = m_pDevice;
+    IMFActivate *pDevice{ m_pDevice };
     SafeRelease(&pDevice);
     m_pDevice = nullptr;
 }
