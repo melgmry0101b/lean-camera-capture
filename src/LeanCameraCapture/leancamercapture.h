@@ -24,6 +24,7 @@
 #include <objbase.h>
 #include <mfapi.h>
 #include <mfidl.h>
+#include <mfreadwrite.h>
 
 #include "saferelease.h"
 #include "mfmethods.h"
