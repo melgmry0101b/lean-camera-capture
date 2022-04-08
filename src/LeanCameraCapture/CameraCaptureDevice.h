@@ -50,7 +50,7 @@ namespace LeanCameraCapture
 
         /* === Data Members === */
     private:
-        IMFActivate *m_device{ nullptr };
+        IMFActivate *m_pDevice{ nullptr };
         System::String ^m_deviceName{ nullptr };
     };
 }
