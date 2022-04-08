@@ -16,6 +16,9 @@
 #include <cassert>
 #include <system_error>
 
+// WIN32_LEAN_AND_MEAN isn't much of a performance boost for
+//  compilation these days, but helps cleaning the global namespace
+//  if you don't want extra api like GDI or Networking
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <objbase.h>
