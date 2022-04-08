@@ -129,4 +129,5 @@ CameraCaptureDevice::!CameraCaptureDevice()
     //  Error C2784 "could not deduce template argument for 'T **' from 'cli::interior_ptr<IMFActivate *>'"
     IMFActivate *pDevice = m_pDevice;
     SafeRelease(&pDevice);
+    m_pDevice = nullptr;
 }
