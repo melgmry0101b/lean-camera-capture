@@ -36,6 +36,11 @@ namespace LeanCameraCapture
         /// </summary>
         CameraCaptureDevice(IMFActivate *device);
 
+        /// <summary>
+        /// Get the underlying IMFActivate
+        /// </summary>
+        IMFActivate *getUnderlyingIMFActivate() { return m_pDevice; }
+
         /* === Properties === */
     public:
         /// <summary>
