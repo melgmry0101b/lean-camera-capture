@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <cmath>
 #include <cassert>
 #include <system_error>
 
@@ -21,6 +22,7 @@
 //  if you don't want extra api like GDI or Networking
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <Shlwapi.h>
 #include <objbase.h>
 #include <mfapi.h>
 #include <mfidl.h>
@@ -29,6 +31,7 @@
 #include "saferelease.h"
 #include "mfmethods.h"
 
+#include "CBufferLock.hpp"
 #include "CSourceReader.h"
 
 #include "CameraCaptureException.hpp"
