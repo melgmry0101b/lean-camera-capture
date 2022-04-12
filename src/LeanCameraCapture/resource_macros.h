@@ -1,6 +1,6 @@
 /*-----------------------------------------------------------------*\
  *
- * macros.h
+ * resource_macros.h
  *   LeanCameraCapture
  *     lean-camera-capture
  *

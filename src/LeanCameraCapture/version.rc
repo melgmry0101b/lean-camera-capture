@@ -8,7 +8,7 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #include "winres.h"
-#include "macros.h"
+#include "resource_macros.h"
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
@@ -33,7 +33,7 @@ END
 2 TEXTINCLUDE 
 BEGIN
     "#include ""winres.h""\r\n"
-    "#include ""macros.h""\0"
+    "#include ""resource_macros.h""\0"
 END
 
 3 TEXTINCLUDE 

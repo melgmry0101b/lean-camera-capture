@@ -152,7 +152,7 @@
     <ClInclude Include="CBufferLock.hpp" />
     <ClInclude Include="CSourceReader.h" />
     <ClInclude Include="leancamercapture.h" />
-    <ClInclude Include="macros.h" />
+    <ClInclude Include="resource_macros.h" />
     <ClInclude Include="mfmethods.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="saferelease.h" />
