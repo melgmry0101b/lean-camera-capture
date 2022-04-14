@@ -15,6 +15,7 @@
 
 #include <cmath>
 #include <cassert>
+#include <stdexcept>
 #include <system_error>
 
 // WIN32_LEAN_AND_MEAN isn't much of a performance boost for
@@ -27,6 +28,7 @@
 #include <mfapi.h>
 #include <mfidl.h>
 #include <mfreadwrite.h>
+#include <mftransform.h>
 
 #include "saferelease.h"
 #include "mfmethods.h"
