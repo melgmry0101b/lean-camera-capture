@@ -17,6 +17,14 @@
 
 using namespace LeanCameraCapture;
 
+// ============================
+// ====== Static Methods ======
+// ============================
+
+// --------------------------------------------------------------------
+// Start
+// --------------------------------------------------------------------
+
 void CameraCaptureManager::Start()
 {
     if (Started) { return; }
@@ -31,6 +39,10 @@ void CameraCaptureManager::Start()
         throw gcnew CameraCaptureException{ ex.code().value(), gcnew System::String{ ex.what() } };
     }
 }
+
+// --------------------------------------------------------------------
+// Stop
+// --------------------------------------------------------------------
 
 void CameraCaptureManager::Stop()
 {

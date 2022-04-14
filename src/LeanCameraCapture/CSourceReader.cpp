@@ -49,9 +49,12 @@ HRESULT CSourceReader::QueryInterface(REFIID riid, void **ppv)
 // ====== IMFSourceReaderCallback methods ======
 // =============================================
 
-// ---------------------------------------------------
+// --------------------------------------------------------------------
 // OnReadSample
-// ---------------------------------------------------
+//
+// A callback method that is called on receiving
+//  a sample after a request using IMFSourceReader::ReadSample
+// --------------------------------------------------------------------
 
 HRESULT CSourceReader::OnReadSample(
     HRESULT hrStatus,
@@ -95,9 +98,9 @@ CSourceReader::~CSourceReader()
 // ====== Private Functions ======
 // ===============================
 
-// ---------------------------------------------------
+// --------------------------------------------------------------------
 // FreeResources
-// ---------------------------------------------------
+// --------------------------------------------------------------------
 
 void CSourceReader::FreeResources()
 {
@@ -114,13 +117,13 @@ void CSourceReader::FreeResources()
     LeaveCriticalSection(&m_criticalSection);
 }
 
-// ---------------------------------------------------
+// --------------------------------------------------------------------
 // InitializeForDevice
 //
 // Here we initialize this instance of CSourceReader
-// to device that exposes IMFActivate. This can be
-// done only once per instance.
-// ---------------------------------------------------
+//  to device that exposes IMFActivate. This can be
+//  done only once per instance.
+// --------------------------------------------------------------------
 
 void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
 {

@@ -15,6 +15,10 @@
 
 #include "mfmethods.h"
 
+// --------------------------------------------------------------------
+// StartMediaFoundation
+// --------------------------------------------------------------------
+
 void StartMediaFoundation() noexcept(false)
 {
     HRESULT hr{ S_OK };
@@ -31,6 +35,10 @@ void StartMediaFoundation() noexcept(false)
         throw std::system_error{ hr, std::system_category(), "Error occurred during MFStartup." };
     }
 }
+
+// --------------------------------------------------------------------
+// StopMediaFoundation
+// --------------------------------------------------------------------
 
 void StopMediaFoundation() noexcept(false)
 {

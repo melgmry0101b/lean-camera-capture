@@ -32,12 +32,12 @@ namespace LeanCameraCapture
 
     internal:
         /// <summary>
-        /// Create new camera capture device
+        /// [Internal] Create new camera capture device
         /// </summary>
         CameraCaptureDevice(IMFActivate *device);
 
         /// <summary>
-        /// Get the underlying IMFActivate
+        /// [Internal] Get the underlying IMFActivate
         /// </summary>
         IMFActivate *getUnderlyingIMFActivate() { return m_pDevice; }
 

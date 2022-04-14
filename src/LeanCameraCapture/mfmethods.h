@@ -15,5 +15,12 @@
 
 #include "leancamercapture.h"
 
+/// <summary>
+/// [Internal][Native] Start the media foundation
+/// </summary>
 void StartMediaFoundation() noexcept(false);
+
+/// <summary>
+/// [Internal][Native] Stop the media foundation
+/// </summary>
 void StopMediaFoundation() noexcept(false);

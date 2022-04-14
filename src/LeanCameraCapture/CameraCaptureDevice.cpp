@@ -19,6 +19,14 @@ using namespace System::Collections::ObjectModel;
 using namespace System::Collections::Generic;
 using namespace LeanCameraCapture;
 
+// ============================
+// ====== Static Methods ======
+// ============================
+
+// --------------------------------------------------------------------
+// GetCameraCaptureDevices
+// --------------------------------------------------------------------
+
 ReadOnlyCollection<CameraCaptureDevice ^> ^CameraCaptureDevice::GetCameraCaptureDevices()
 {
     // Check if Media Foundation is running
@@ -87,6 +95,10 @@ done:
     return cameraCaptureDevices->AsReadOnly();
 }
 
+// =========================
+// ====== Constructor ======
+// =========================
+
 CameraCaptureDevice::CameraCaptureDevice(IMFActivate *device) :
     m_pDevice{ device }
 {
@@ -113,6 +125,10 @@ CameraCaptureDevice::CameraCaptureDevice(IMFActivate *device) :
     CoTaskMemFree(pwszDeviceFriendlyName);
 }
 
+// ========================
+// ====== Destructor ======
+// ========================
+
 CameraCaptureDevice::~CameraCaptureDevice()
 {
     // Release Managed Resources
@@ -120,6 +136,10 @@ CameraCaptureDevice::~CameraCaptureDevice()
     // Call the finalizer
     this->!CameraCaptureDevice();
 }
+
+// =======================
+// ====== Finalizer ======
+// =======================
 
 CameraCaptureDevice::!CameraCaptureDevice()
 {
