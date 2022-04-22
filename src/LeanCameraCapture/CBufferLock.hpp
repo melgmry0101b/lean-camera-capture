@@ -103,7 +103,6 @@ namespace LeanCameraCapture
                 }
             }
 
-        protected:
             ~CBufferLock()
             {
                 UnlockBuffer();

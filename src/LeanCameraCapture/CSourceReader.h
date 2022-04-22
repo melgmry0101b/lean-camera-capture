@@ -63,7 +63,6 @@ namespace LeanCameraCapture
             UINT32 getImageWidth() { return m_imageWidth; }
             UINT32 getImageHeight() { return m_imageHeight; }
 
-        protected:
             // ---
             // --- Destructor
             // ---
