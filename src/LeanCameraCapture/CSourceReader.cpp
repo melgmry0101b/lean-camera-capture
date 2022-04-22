@@ -64,7 +64,45 @@ HRESULT CSourceReader::OnReadSample(
     IMFSample *pSample
     )
 {
-    HRESULT hr{ S_OK };
+    HRESULT hr{ hrStatus };
+
+    IMFMediaBuffer *pBuffer{ nullptr };
+
+    EnterCriticalSection(&m_criticalSection);
+
+    // Check if hr is failed
+    if (FAILED(hr)) { goto done; }
+
+    // Read from the sample if available
+    if (pSample)
+    {
+        hr = pSample->GetBufferByIndex(0, &pBuffer);
+        if (FAILED(hr)) { goto done; }
+
+
+    }
+
+    // Request the next frame
+    hr = m_pSourceReader->ReadSample(
+        (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM,
+        0,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr
+        );
+    if (FAILED(hr)) { goto done; }
+
+done:
+    SafeRelease(&pBuffer);
+
+    if (FAILED(hr))
+    {
+        // TODO: Call error callback
+    }
+
+    LeaveCriticalSection(&m_criticalSection);
+
     return hr;
 }
 
@@ -118,6 +156,70 @@ void CSourceReader::FreeResources()
 }
 
 // --------------------------------------------------------------------
+// GetWidthHeightDefaultStrideForMediaType [static]
+// --------------------------------------------------------------------
+
+HRESULT CSourceReader::GetWidthHeightDefaultStrideForMediaType(
+    IMFMediaType *pMediaType,
+    LONG *plDefaultStride,
+    UINT32 *pWidth,
+    UINT32 *pHeight
+    )
+{
+    // As a note here for using `assert`:
+    //  We use asserts when we are dealing with private code, not API code,
+    //  which we want to check the integrity during development,
+    //  but no unexpected entries are going to be passed to the function
+    //  from external calls.
+
+    assert(pMediaType != nullptr);
+    assert(plDefaultStride != nullptr);
+    assert(pWidth != nullptr);
+    assert(pHeight != nullptr);
+
+    HRESULT hr{ S_OK };
+    GUID mediaSubtype{ GUID_NULL };
+
+    LONG lStride{ 0 };
+    UINT32 width{ 0 };
+    UINT32 height{ 0 };
+
+    // Get the width and height for the frame
+    hr = MFGetAttributeSize(pMediaType, MF_MT_FRAME_SIZE, &width, &height);
+    if (FAILED(hr)) { goto done; }
+
+    // Try get the default stride
+    // WARN: we are using reinterpret_cast here, the docs state:
+    //  "The attribute value is stored as a UINT32,
+    //   but should be cast to a 32-bit signed integer value. Stride can be negative"
+    //  from: https://docs.microsoft.com/en-us/windows/win32/medfound/mf-mt-default-stride-attribute
+    hr = pMediaType->GetUINT32(MF_MT_DEFAULT_STRIDE, reinterpret_cast<UINT32 *>(&lStride));
+    if (FAILED(hr))
+    {
+        // Try to calculate the default stride.
+        hr = pMediaType->GetGUID(MF_MT_SUBTYPE, &mediaSubtype);
+        if (FAILED(hr)) { goto done; }
+
+        hr = MFGetStrideForBitmapInfoHeader(mediaSubtype.Data1, width, &lStride);
+        if (FAILED(hr)) { goto done; }
+
+        // Set the attribute for later reference if needed
+        (void)pMediaType->SetUINT32(MF_MT_DEFAULT_STRIDE, static_cast<UINT32>(lStride));
+    }
+
+    *plDefaultStride = lStride;
+    *pWidth = width;
+    *pHeight = height;
+
+done:
+    return hr;
+}
+
+// ==============================
+// ====== Public Functions ======
+// ==============================
+
+// --------------------------------------------------------------------
 // InitializeForDevice
 //
 // Here we initialize this instance of CSourceReader
@@ -150,7 +252,7 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
 
     MFT_REGISTER_TYPE_INFO inputInfo{ 0 };
     MFT_REGISTER_TYPE_INFO outputInfo{ 0 };
-    GUID outputSubtype{ 0 };
+    GUID outputSubtype{ GUID_NULL };
 
     EnterCriticalSection(&m_criticalSection);
 
@@ -274,6 +376,14 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
     if (FAILED(hr))
     {
         exWhatString = "Error occurred while creating video processor using CoCreateInstance().";
+        goto done;
+    }
+
+    // Get the DefaultStride, Width, Height for the frames
+    hr = GetWidthHeightDefaultStrideForMediaType(pMediaType, &m_lImageDefaultStride, &m_imageWidth, &m_imageHeight);
+    if (FAILED(hr))
+    {
+        exWhatString = "Error occurred during retrieving Width, Height, and DefualtStride for media type.";
         goto done;
     }
 

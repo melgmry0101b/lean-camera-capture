@@ -59,11 +59,30 @@ namespace LeanCameraCapture
 
             void InitializeForDevice(IMFActivate *pActivate) noexcept(false);
 
+            LONG getImageDefaultStride() { return m_lImageDefaultStride; }
+            UINT32 getImageWidth() { return m_imageWidth; }
+            UINT32 getImageHeight() { return m_imageHeight; }
+
         protected:
+            // ---
+            // --- Destructor
+            // ---
+
             ~CSourceReader();
 
         private:
             void FreeResources();
+
+            // ---
+            // --- Static Methods
+            // ---
+
+            static HRESULT GetWidthHeightDefaultStrideForMediaType(
+                IMFMediaType *pMediaType,
+                LONG *plDefaultStride,
+                UINT32 *pWidth,
+                UINT32 *pHeight
+                );
 
             /* === Data Members === */
         private:
@@ -76,6 +95,10 @@ namespace LeanCameraCapture
             IMFActivate         *m_pDevice;             // Reference for the used capture device
             IMFSourceReader     *m_pSourceReader;       // Reader for samples from the capture device
             IMFTransform        *m_pProcessor;          // Processing the input type into RGB32 output type
+
+            LONG                m_lImageDefaultStride;
+            UINT32              m_imageWidth;
+            UINT32              m_imageHeight;
 
             WCHAR               *m_pwszSymbolicLink;
             UINT32              m_cchSymbolicLink;
