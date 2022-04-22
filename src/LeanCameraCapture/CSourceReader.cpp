@@ -116,6 +116,9 @@ CSourceReader::CSourceReader() :
     m_pDevice{ nullptr },
     m_pSourceReader{ nullptr },
     m_pProcessor{ nullptr },
+    m_lImageDefaultStride{ 0 },
+    m_imageWidth{ 0 },
+    m_imageHeight{ 0 },
     m_pwszSymbolicLink{ nullptr },
     m_cchSymbolicLink{ 0 }
 {
