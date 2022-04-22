@@ -44,10 +44,10 @@ namespace LeanCameraCapture
             /// Locks the buffer and outs its contents
             /// </summary>
             HRESULT Lock(
-                LONG    lDefaultStride,     // Stride is fundamentally the width of the image -what the device reports-
+                LONG    lDefaultStride,     // Stride is fundamentally the width of the viewable image in addition to padding
                 DWORD   dwHeightInPixels,   // The height of the image that the device reports
                 BYTE    **ppbScanLine0,     // Receiving pointer to the first scanline -row- of the image
-                LONG    *plStride           // Receiving the actual stride -width- of the image
+                LONG    *plStride           // Receiving the actual stride of the image
                 )
             {
                 HRESULT hr{ S_OK };
