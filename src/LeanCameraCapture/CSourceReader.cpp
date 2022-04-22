@@ -84,7 +84,7 @@ HRESULT CSourceReader::OnReadSample(
 
     // Request the next frame
     hr = m_pSourceReader->ReadSample(
-        (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM,
+        static_cast<DWORD>(MF_SOURCE_READER_FIRST_VIDEO_STREAM),
         0,
         nullptr,
         nullptr,
@@ -389,7 +389,7 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
 
     // Read the first sample
     hr = m_pSourceReader->ReadSample(
-        (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM,
+        static_cast<DWORD>(MF_SOURCE_READER_FIRST_VIDEO_STREAM),
         0,
         nullptr,
         nullptr,
