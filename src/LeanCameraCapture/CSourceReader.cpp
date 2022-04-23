@@ -68,6 +68,9 @@ HRESULT CSourceReader::OnReadSample(
 
     IMFMediaBuffer *pBuffer{ nullptr };
 
+    BYTE *pbScanline0{ nullptr };
+    LONG lStride{ 0 };
+
     EnterCriticalSection(&m_criticalSection);
 
     // Check if hr is failed
@@ -156,66 +159,6 @@ void CSourceReader::FreeResources()
     m_cchSymbolicLink = 0;
 
     LeaveCriticalSection(&m_criticalSection);
-}
-
-// --------------------------------------------------------------------
-// GetWidthHeightDefaultStrideForMediaType [static]
-// --------------------------------------------------------------------
-
-HRESULT CSourceReader::GetWidthHeightDefaultStrideForMediaType(
-    IMFMediaType *pMediaType,
-    LONG *plDefaultStride,
-    UINT32 *pWidth,
-    UINT32 *pHeight
-    )
-{
-    // As a note here for using `assert`:
-    //  We use asserts when we are dealing with private code, not API code,
-    //  which we want to check the integrity during development,
-    //  but no unexpected entries are going to be passed to the function
-    //  from external calls.
-
-    assert(pMediaType != nullptr);
-    assert(plDefaultStride != nullptr);
-    assert(pWidth != nullptr);
-    assert(pHeight != nullptr);
-
-    HRESULT hr{ S_OK };
-    GUID mediaSubtype{ GUID_NULL };
-
-    LONG lStride{ 0 };
-    UINT32 width{ 0 };
-    UINT32 height{ 0 };
-
-    // Get the width and height for the frame
-    hr = MFGetAttributeSize(pMediaType, MF_MT_FRAME_SIZE, &width, &height);
-    if (FAILED(hr)) { goto done; }
-
-    // Try get the default stride
-    // WARN: we are using reinterpret_cast here, the docs state:
-    //  "The attribute value is stored as a UINT32,
-    //   but should be cast to a 32-bit signed integer value. Stride can be negative"
-    //  from: https://docs.microsoft.com/en-us/windows/win32/medfound/mf-mt-default-stride-attribute
-    hr = pMediaType->GetUINT32(MF_MT_DEFAULT_STRIDE, reinterpret_cast<UINT32 *>(&lStride));
-    if (FAILED(hr))
-    {
-        // Try to calculate the default stride.
-        hr = pMediaType->GetGUID(MF_MT_SUBTYPE, &mediaSubtype);
-        if (FAILED(hr)) { goto done; }
-
-        hr = MFGetStrideForBitmapInfoHeader(mediaSubtype.Data1, width, &lStride);
-        if (FAILED(hr)) { goto done; }
-
-        // Set the attribute for later reference if needed
-        (void)pMediaType->SetUINT32(MF_MT_DEFAULT_STRIDE, static_cast<UINT32>(lStride));
-    }
-
-    *plDefaultStride = lStride;
-    *pWidth = width;
-    *pHeight = height;
-
-done:
-    return hr;
 }
 
 // ==============================
@@ -382,6 +325,14 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
         goto done;
     }
 
+    // Set the media type for the processor
+    hr = SetVideoProcessorOutputForInputMediaType(m_pProcessor, pMediaType, MFVideoFormat_RGB32);
+    if (FAILED(hr))
+    {
+        exWhatString = "Error occurred while preparing the video processor for the media types.";
+        goto done;
+    }
+
     // Get the DefaultStride, Width, Height for the frames
     hr = GetWidthHeightDefaultStrideForMediaType(pMediaType, &m_lImageDefaultStride, &m_imageWidth, &m_imageHeight);
     if (FAILED(hr))
@@ -420,4 +371,115 @@ done:
     {
         throw std::system_error{ hr, std::system_category(), exWhatString };
     }
+}
+
+// ==============================
+// ====== Static Functions ======
+// ==============================
+
+// --------------------------------------------------------------------
+// SetVideoProcessorInputAndOuputMediaTypes [static]
+// --------------------------------------------------------------------
+
+HRESULT CSourceReader::SetVideoProcessorOutputForInputMediaType(
+    IMFTransform *pProcessor,
+    IMFMediaType *pInputMediaType,
+    const GUID guidOutputVideoSubtype
+    )
+{
+    assert(pProcessor != nullptr);
+    assert(pInputMediaType != nullptr);
+    assert(guidOutputVideoSubtype != GUID_NULL);
+
+    HRESULT hr{ S_OK };
+    GUID guidIndexVideoSubtype{ GUID_NULL };
+
+    IMFMediaType *pOutputMediaType{ nullptr };
+
+    // Set the input type for the first stream
+    hr = pProcessor->SetInputType(0, pInputMediaType, 0);
+    if (FAILED(hr)) { goto done; }
+
+    //Loop for the output type
+    for (DWORD dwTypeIndex = 0; ; dwTypeIndex++)
+    {
+        hr = pProcessor->GetOutputAvailableType(0, dwTypeIndex, &pOutputMediaType);
+        if (FAILED(hr)) { goto done; }
+
+        hr = pOutputMediaType->GetGUID(MF_MT_SUBTYPE, &guidIndexVideoSubtype);
+        if (FAILED(hr)) { goto done; }
+
+        if (guidIndexVideoSubtype == guidOutputVideoSubtype) { break; }
+
+        // Release for the next iteration
+        SafeRelease(&pOutputMediaType);
+    }
+
+    // Set the output type
+    hr = pProcessor->SetOutputType(0, pOutputMediaType, 0);
+    if (FAILED(hr)) { goto done; } // Be consistent even if not necessary!
+
+done:
+    SafeRelease(&pOutputMediaType);
+    return hr;
+}
+
+// --------------------------------------------------------------------
+// GetWidthHeightDefaultStrideForMediaType [static]
+// --------------------------------------------------------------------
+
+HRESULT CSourceReader::GetWidthHeightDefaultStrideForMediaType(
+    IMFMediaType *pMediaType,
+    LONG *plDefaultStride,
+    UINT32 *pWidth,
+    UINT32 *pHeight
+)
+{
+    // As a note here for using `assert`:
+    //  We use asserts when we are dealing with private code, not API code,
+    //  which we want to check the integrity during development,
+    //  but no unexpected entries are going to be passed to the function
+    //  from external calls.
+
+    assert(pMediaType != nullptr);
+    assert(plDefaultStride != nullptr);
+    assert(pWidth != nullptr);
+    assert(pHeight != nullptr);
+
+    HRESULT hr{ S_OK };
+    GUID mediaSubtype{ GUID_NULL };
+
+    LONG lStride{ 0 };
+    UINT32 width{ 0 };
+    UINT32 height{ 0 };
+
+    // Get the width and height for the frame
+    hr = MFGetAttributeSize(pMediaType, MF_MT_FRAME_SIZE, &width, &height);
+    if (FAILED(hr)) { goto done; }
+
+    // Try get the default stride
+    // WARN: we are using reinterpret_cast here, the docs state:
+    //  "The attribute value is stored as a UINT32,
+    //   but should be cast to a 32-bit signed integer value. Stride can be negative"
+    //  from: https://docs.microsoft.com/en-us/windows/win32/medfound/mf-mt-default-stride-attribute
+    hr = pMediaType->GetUINT32(MF_MT_DEFAULT_STRIDE, reinterpret_cast<UINT32 *>(&lStride));
+    if (FAILED(hr))
+    {
+        // Try to calculate the default stride.
+        hr = pMediaType->GetGUID(MF_MT_SUBTYPE, &mediaSubtype);
+        if (FAILED(hr)) { goto done; }
+
+        hr = MFGetStrideForBitmapInfoHeader(mediaSubtype.Data1, width, &lStride);
+        if (FAILED(hr)) { goto done; }
+
+        // Set the attribute for later reference if needed
+        (void)pMediaType->SetUINT32(MF_MT_DEFAULT_STRIDE, static_cast<UINT32>(lStride));
+    }
+
+    *plDefaultStride = lStride;
+    *pWidth = width;
+    *pHeight = height;
+
+done:
+    return hr;
 }

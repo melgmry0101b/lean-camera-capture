@@ -83,6 +83,12 @@ namespace LeanCameraCapture
                 UINT32 *pHeight
                 );
 
+            static HRESULT SetVideoProcessorOutputForInputMediaType(
+                IMFTransform *pProcessor,
+                IMFMediaType *pInputMediaType,
+                const GUID guidOutputVideoSubtype
+                );
+
             /* === Data Members === */
         private:
             long                m_nRefCount;            // Reference count for this COM object.
