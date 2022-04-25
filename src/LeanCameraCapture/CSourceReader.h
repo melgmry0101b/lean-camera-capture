@@ -72,6 +72,17 @@ namespace LeanCameraCapture
         private:
             void FreeResources();
 
+            HRESULT ProcessorProcessOutput(
+                DWORD dwOutputStreamID,
+                IMFSample **ppOutputSample
+                );
+
+            HRESULT ProcessorProcessSample(
+                DWORD dwStreamID,
+                IMFSample *pInputSample,
+                IMFSample **ppOutputSample
+            );
+
             // ---
             // --- Static Methods
             // ---
@@ -91,22 +102,24 @@ namespace LeanCameraCapture
 
             /* === Data Members === */
         private:
-            long                m_nRefCount;            // Reference count for this COM object.
-            CRITICAL_SECTION    m_criticalSection;      // For thread safety.
+            long                    m_nRefCount;            // Reference count for this COM object.
+            CRITICAL_SECTION        m_criticalSection;      // For thread safety.
                                                         //  We should've used std::mutex
                                                         //  but its not supported under C++/CLI
                                                         //  and no need to hop into mental gymnastics to enable it.
 
-            IMFActivate         *m_pDevice;             // Reference for the used capture device
-            IMFSourceReader     *m_pSourceReader;       // Reader for samples from the capture device
-            IMFTransform        *m_pProcessor;          // Processing the input type into RGB32 output type
+            IMFActivate             *m_pDevice;             // Reference for the used capture device
+            IMFSourceReader         *m_pSourceReader;       // Reader for samples from the capture device
+            IMFTransform            *m_pProcessor;          // Processing the input type into RGB32 output type
 
-            LONG                m_lImageDefaultStride;
-            UINT32              m_imageWidth;
-            UINT32              m_imageHeight;
+            LONG                    m_lImageDefaultStride;
+            UINT32                  m_imageWidth;
+            UINT32                  m_imageHeight;
 
-            WCHAR               *m_pwszSymbolicLink;
-            UINT32              m_cchSymbolicLink;
+            std::unique_ptr<BYTE[]> m_frameBuffer;
+
+            WCHAR                   *m_pwszSymbolicLink;
+            UINT32                  m_cchSymbolicLink;
         };
     }
 }

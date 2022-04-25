@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <memory>
 #include <cmath>
 #include <cassert>
 #include <stdexcept>
@@ -29,6 +30,7 @@
 #include <mfidl.h>
 #include <mfreadwrite.h>
 #include <mftransform.h>
+#include <Mferror.h>
 
 #include "saferelease.h"
 #include "mfmethods.h"

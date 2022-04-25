@@ -66,7 +66,7 @@ HRESULT CSourceReader::OnReadSample(
 {
     HRESULT hr{ hrStatus };
 
-    IMFMediaBuffer *pBuffer{ nullptr };
+    IMFSample *pOutputSample{ nullptr };
 
     BYTE *pbScanline0{ nullptr };
     LONG lStride{ 0 };
@@ -79,7 +79,8 @@ HRESULT CSourceReader::OnReadSample(
     // Read from the sample if available
     if (pSample)
     {
-        hr = pSample->GetBufferByIndex(0, &pBuffer);
+        // --- Convert the buffer to RGB32 ---
+        hr = ProcessorProcessSample(0, pSample, &pOutputSample);
         if (FAILED(hr)) { goto done; }
 
 
@@ -97,7 +98,7 @@ HRESULT CSourceReader::OnReadSample(
     if (FAILED(hr)) { goto done; }
 
 done:
-    SafeRelease(&pBuffer);
+    SafeRelease(&pOutputSample);
 
     if (FAILED(hr))
     {
@@ -122,6 +123,7 @@ CSourceReader::CSourceReader() :
     m_lImageDefaultStride{ 0 },
     m_imageWidth{ 0 },
     m_imageHeight{ 0 },
+    m_frameBuffer{ nullptr },
     m_pwszSymbolicLink{ nullptr },
     m_cchSymbolicLink{ 0 }
 {
@@ -159,6 +161,122 @@ void CSourceReader::FreeResources()
     m_cchSymbolicLink = 0;
 
     LeaveCriticalSection(&m_criticalSection);
+}
+
+// --------------------------------------------------------------------
+// ProcessorProcessOutput
+// --------------------------------------------------------------------
+
+HRESULT CSourceReader::ProcessorProcessOutput(
+    DWORD dwOutputStreamID,
+    IMFSample **ppOutputSample
+    )
+{
+    HRESULT hr{ S_OK };
+
+    DWORD dwProcessOutputStatus{ 0 };
+    MFT_OUTPUT_STREAM_INFO outputStreamInfo{ 0 };
+    MFT_OUTPUT_DATA_BUFFER outputDataBuffer{ 0 };
+
+    IMFMediaBuffer *pOutputBuffer{ nullptr };
+    IMFSample *pOutputSample{ nullptr };
+
+    hr = m_pProcessor->GetOutputStreamInfo(dwOutputStreamID, &outputStreamInfo);
+    if (FAILED(hr)) { goto done; }
+
+    // Check if the sample should be allocated by us
+    if ((outputStreamInfo.dwFlags & (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES))
+        != (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES))
+    {
+        // Create buffer
+        hr = MFCreateAlignedMemoryBuffer(outputStreamInfo.cbSize, outputStreamInfo.cbAlignment, &pOutputBuffer);
+        if (FAILED(hr)) { goto done; }
+
+        // Create the output sample
+        hr = MFCreateSample(&pOutputSample);
+        if (FAILED(hr)) { goto done; }
+
+        // Add buffer to the sample
+        hr = pOutputSample->AddBuffer(pOutputBuffer);
+        if (FAILED(hr)) { goto done; }
+    }
+
+    // Get the output
+    outputDataBuffer.dwStreamID = dwOutputStreamID;
+    outputDataBuffer.pSample = pOutputSample;
+    outputDataBuffer.dwStatus = 0;
+    outputDataBuffer.pEvents = nullptr;
+    hr = m_pProcessor->ProcessOutput(0, 1, &outputDataBuffer, &dwProcessOutputStatus);
+    if (FAILED(hr)) { goto done; }
+
+    // set the output pointer
+    if (ppOutputSample)
+    {
+        *ppOutputSample = pOutputSample;
+    }
+    else
+    {
+        // If the calling function isn't receiving the sample, release it!
+        SafeRelease(&pOutputSample);
+    }
+
+done:
+    SafeRelease(&pOutputBuffer);
+    return hr;
+}
+
+// --------------------------------------------------------------------
+// ProcessorProcessSample
+// --------------------------------------------------------------------
+
+HRESULT CSourceReader::ProcessorProcessSample(
+    DWORD dwStreamID,
+    IMFSample *pInputSample,
+    IMFSample **ppOutputSample
+    )
+{
+    assert(pInputSample != nullptr);
+    assert(ppOutputSample != nullptr);
+
+    HRESULT hr{ S_OK };
+
+    IMFSample *pOutputSample{ nullptr };
+
+    hr = m_pProcessor->ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0);
+    if (FAILED(hr)) { goto done; }
+
+    hr = m_pProcessor->ProcessInput(dwStreamID, pInputSample, 0);
+    if (FAILED(hr)) { goto finalizeAndDrain; }
+
+    hr = ProcessorProcessOutput(dwStreamID, &pOutputSample);
+    if (FAILED(hr)) { goto finalizeAndDrain; }
+
+    if (ppOutputSample)
+    {
+        *ppOutputSample = pOutputSample;
+    }
+    else
+    {
+        // If the calling method isn't accept the output, release the sample
+        SafeRelease(&pOutputSample);
+    }
+
+finalizeAndDrain:
+    hr = m_pProcessor->ProcessMessage(MFT_MESSAGE_NOTIFY_END_OF_STREAM, 0);
+    if (FAILED(hr)) { goto done; }
+
+    hr = m_pProcessor->ProcessMessage(MFT_MESSAGE_COMMAND_DRAIN, 0);
+    if (FAILED(hr)) { goto done; }
+
+    while ((hr = ProcessorProcessOutput(dwStreamID, nullptr)) != MF_E_TRANSFORM_NEED_MORE_INPUT)
+    {
+        // Other failures other than `MF_E_TRANSFORM_NEED_MORE_INPUT`
+        if (FAILED(hr)) { goto done; }
+    }
+
+done:
+    // If `MF_E_TRANSFORM_NEED_MORE_INPUT` return success, otherwise return the hresult
+    return (hr == MF_E_TRANSFORM_NEED_MORE_INPUT) ? S_OK : hr;
 }
 
 // ==============================
@@ -276,7 +394,7 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
     for (DWORD i = 0; ; i++)
     {
         hr = m_pSourceReader->GetNativeMediaType(
-            (DWORD)MF_SOURCE_READER_FIRST_VIDEO_STREAM,
+            static_cast<DWORD>(MF_SOURCE_READER_FIRST_VIDEO_STREAM),
             i,
             &pMediaType
             );
@@ -338,6 +456,18 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
     if (FAILED(hr))
     {
         exWhatString = "Error occurred during retrieving Width, Height, and DefualtStride for media type.";
+        goto done;
+    }
+
+    // Create the buffer for the frames
+    try
+    {
+        m_frameBuffer = std::make_unique<BYTE[]>(m_imageWidth * m_imageHeight);
+    }
+    catch (const std::bad_alloc &/*ex*/)
+    {
+        exWhatString = "Error occurred while allocating memory for the frame buffer.";
+        hr = E_OUTOFMEMORY;
         goto done;
     }
 
