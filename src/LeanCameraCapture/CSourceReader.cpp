@@ -96,6 +96,7 @@ HRESULT CSourceReader::OnReadSample(
             if (FAILED(hr)) { goto done; }
 
             // Copy the frame
+            // Note that here we are multiplying with 4 as we are using RGB32 (4 byte) format
             hr = MFCopyImage(m_frameBuffer.get(), m_frameWidth, pbScanline0, lStride, m_frameWidth * 4, m_frameHeight);
             if (FAILED(hr)) { goto done; }
 
