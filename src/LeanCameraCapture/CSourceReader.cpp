@@ -66,7 +66,8 @@ HRESULT CSourceReader::OnReadSample(
 {
     HRESULT hr{ hrStatus };
 
-    IMFSample *pOutputSample{ nullptr };
+    IMFSample       *pOutputSample{ nullptr };
+    IMFMediaBuffer  *pBuffer{ nullptr };
 
     BYTE *pbScanline0{ nullptr };
     LONG lStride{ 0 };
@@ -79,26 +80,32 @@ HRESULT CSourceReader::OnReadSample(
     // Read from the sample if available
     if (pSample)
     {
-        // --- Convert the buffer to RGB32 ---
+        // Convert the buffer to RGB32
         hr = ProcessorProcessSample(0, pSample, &pOutputSample);
         if (FAILED(hr)) { goto done; }
 
+        // Get the buffer for the frame from the sample if the buffer is set
+        if (pOutputSample)
+        {
+            hr = pOutputSample->GetBufferByIndex(0, &pBuffer);
+            if (FAILED(hr)) { goto done; }
 
+            // Lock the buffer
+            CBufferLock buffer{ pBuffer };
+            hr = buffer.LockBuffer(m_lSrcDefaultStride, m_frameHeight, &pbScanline0, &lStride);
+            if (FAILED(hr)) { goto done; }
+
+            // Copy the frame
+            hr = MFCopyImage(m_frameBuffer.get(), m_frameWidth, pbScanline0, lStride, m_frameWidth * 4, m_frameHeight);
+            if (FAILED(hr)) { goto done; }
+
+            // TODO: Call handlers
+        }
     }
-
-    // Request the next frame
-    hr = m_pSourceReader->ReadSample(
-        static_cast<DWORD>(MF_SOURCE_READER_FIRST_VIDEO_STREAM),
-        0,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr
-        );
-    if (FAILED(hr)) { goto done; }
 
 done:
     SafeRelease(&pOutputSample);
+    SafeRelease(&pBuffer);
 
     if (FAILED(hr))
     {
@@ -120,9 +127,9 @@ CSourceReader::CSourceReader() :
     m_pDevice{ nullptr },
     m_pSourceReader{ nullptr },
     m_pProcessor{ nullptr },
-    m_lImageDefaultStride{ 0 },
-    m_imageWidth{ 0 },
-    m_imageHeight{ 0 },
+    m_lSrcDefaultStride{ 0 },
+    m_frameWidth{ 0 },
+    m_frameHeight{ 0 },
     m_frameBuffer{ nullptr },
     m_pwszSymbolicLink{ nullptr },
     m_cchSymbolicLink{ 0 }
@@ -209,14 +216,15 @@ HRESULT CSourceReader::ProcessorProcessOutput(
     hr = m_pProcessor->ProcessOutput(0, 1, &outputDataBuffer, &dwProcessOutputStatus);
     if (FAILED(hr)) { goto done; }
 
-    // set the output pointer
-    if (ppOutputSample)
+    // set the output pointer if the caller is willing to receive the sample, and is available to begin with!
+    if (ppOutputSample
+        && ((outputDataBuffer.dwStatus & MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE) != MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE))
     {
         *ppOutputSample = pOutputSample;
     }
     else
     {
-        // If the calling function isn't receiving the sample, release it!
+        // If the calling function isn't receiving the sample or the buffer isn't set, release it!
         SafeRelease(&pOutputSample);
     }
 
@@ -282,6 +290,30 @@ done:
 // ==============================
 // ====== Public Functions ======
 // ==============================
+
+// --------------------------------------------------------------------
+// ReadFrame
+// --------------------------------------------------------------------
+
+HRESULT CSourceReader::ReadFrame()
+{
+    HRESULT hr{ S_OK };
+
+    EnterCriticalSection(&m_criticalSection);
+
+    hr = m_pSourceReader->ReadSample(
+            static_cast<DWORD>(MF_SOURCE_READER_FIRST_VIDEO_STREAM),
+            0,
+            nullptr,
+            nullptr,
+            nullptr,
+            nullptr
+            );
+
+    LeaveCriticalSection(&m_criticalSection);
+
+    return hr;
+}
 
 // --------------------------------------------------------------------
 // InitializeForDevice
@@ -452,7 +484,7 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
     }
 
     // Get the DefaultStride, Width, Height for the frames
-    hr = GetWidthHeightDefaultStrideForMediaType(pMediaType, &m_lImageDefaultStride, &m_imageWidth, &m_imageHeight);
+    hr = GetWidthHeightDefaultStrideForMediaType(pMediaType, &m_lSrcDefaultStride, &m_frameWidth, &m_frameHeight);
     if (FAILED(hr))
     {
         exWhatString = "Error occurred during retrieving Width, Height, and DefualtStride for media type.";
@@ -462,27 +494,12 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
     // Create the buffer for the frames
     try
     {
-        m_frameBuffer = std::make_unique<BYTE[]>(m_imageWidth * m_imageHeight);
+        m_frameBuffer = std::make_unique<BYTE[]>(m_frameWidth * m_frameHeight);
     }
     catch (const std::bad_alloc &/*ex*/)
     {
         exWhatString = "Error occurred while allocating memory for the frame buffer.";
         hr = E_OUTOFMEMORY;
-        goto done;
-    }
-
-    // Read the first sample
-    hr = m_pSourceReader->ReadSample(
-        static_cast<DWORD>(MF_SOURCE_READER_FIRST_VIDEO_STREAM),
-        0,
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr
-        );
-    if (FAILED(hr))
-    {
-        exWhatString = "Error occurred during IMFSourceReader::ReadSample().";
         goto done;
     }
 

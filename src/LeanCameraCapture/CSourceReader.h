@@ -58,10 +58,10 @@ namespace LeanCameraCapture
             // ---
 
             void InitializeForDevice(IMFActivate *pActivate) noexcept(false);
+            HRESULT ReadFrame();
 
-            LONG getImageDefaultStride() { return m_lImageDefaultStride; }
-            UINT32 getImageWidth() { return m_imageWidth; }
-            UINT32 getImageHeight() { return m_imageHeight; }
+            UINT32 getFrameWidth() { return m_frameWidth; }
+            UINT32 getFrameHeight() { return m_frameHeight; }
 
             // ---
             // --- Destructor
@@ -112,9 +112,10 @@ namespace LeanCameraCapture
             IMFSourceReader         *m_pSourceReader;       // Reader for samples from the capture device
             IMFTransform            *m_pProcessor;          // Processing the input type into RGB32 output type
 
-            LONG                    m_lImageDefaultStride;
-            UINT32                  m_imageWidth;
-            UINT32                  m_imageHeight;
+            LONG                    m_lSrcDefaultStride;
+
+            UINT32                  m_frameWidth;
+            UINT32                  m_frameHeight;
 
             std::unique_ptr<BYTE[]> m_frameBuffer;
 
