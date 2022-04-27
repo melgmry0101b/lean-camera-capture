@@ -15,12 +15,24 @@
 
 #include "mfmethods.h"
 
+// =======================================================================
+// ====== Global variable for storing the state of Media Foundation ======
+// =======================================================================
+
+static bool g_IsMediaFoundationStarted{ false };
+
+// ======================================
+// ====== Media Foundation Methods ======
+// ======================================
+
 // --------------------------------------------------------------------
 // StartMediaFoundation
 // --------------------------------------------------------------------
 
 void StartMediaFoundation() noexcept(false)
 {
+    if (g_IsMediaFoundationStarted) { return; }
+
     HRESULT hr{ S_OK };
 
     hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
@@ -34,6 +46,8 @@ void StartMediaFoundation() noexcept(false)
     {
         throw std::system_error{ hr, std::system_category(), "Error occurred during MFStartup." };
     }
+
+    g_IsMediaFoundationStarted = true;
 }
 
 // --------------------------------------------------------------------
@@ -42,6 +56,8 @@ void StartMediaFoundation() noexcept(false)
 
 void StopMediaFoundation() noexcept(false)
 {
+    if (!g_IsMediaFoundationStarted) { return; }
+
     HRESULT hr{ S_OK };
 
     hr = MFShutdown();
@@ -51,4 +67,15 @@ void StopMediaFoundation() noexcept(false)
     }
 
     CoUninitialize();
+
+    g_IsMediaFoundationStarted = false;
+}
+
+// --------------------------------------------------------------------
+// GetIsMediaFoundationStarted
+// --------------------------------------------------------------------
+
+bool GetIsMediaFoundationStarted()
+{
+    return g_IsMediaFoundationStarted;
 }

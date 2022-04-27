@@ -36,15 +36,9 @@ namespace LeanCameraCapture
 
         /* Properties */
     public:
-        static property bool Started
+        static property bool IsStarted
         {
-            bool get() { return s_started; }
-        protected:
-            void set(bool val) { s_started = val; }
+            bool get() { return GetIsMediaFoundationStarted(); }
         }
-
-        /* Date Members */
-    private:
-        static bool s_started{ false };
     };
 }

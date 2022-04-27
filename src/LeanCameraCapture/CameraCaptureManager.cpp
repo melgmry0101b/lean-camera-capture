@@ -27,12 +27,9 @@ using namespace LeanCameraCapture;
 
 void CameraCaptureManager::Start()
 {
-    if (Started) { return; }
-
     try
     {
         StartMediaFoundation();
-        Started = true;
     }
     catch (const std::system_error &ex)
     {
@@ -46,12 +43,9 @@ void CameraCaptureManager::Start()
 
 void CameraCaptureManager::Stop()
 {
-    if (!Started) { return; }
-
     try
     {
         StopMediaFoundation();
-        Started = false;
     }
     catch (const std::system_error &ex)
     {

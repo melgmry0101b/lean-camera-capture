@@ -24,3 +24,8 @@ void StartMediaFoundation() noexcept(false);
 /// [Internal][Native] Stop the media foundation
 /// </summary>
 void StopMediaFoundation() noexcept(false);
+
+/// <summary>
+/// [Internal][Native] Gets the state of Media Foundation
+/// </summary>
+bool GetIsMediaFoundationStarted();
