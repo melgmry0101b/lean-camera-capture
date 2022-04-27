@@ -36,6 +36,9 @@ namespace LeanCameraCapture
 
         /* Properties */
     public:
+        /// <summary>
+        /// The state of the manager
+        /// </summary>
         static property bool IsStarted
         {
             bool get() { return GetIsMediaFoundationStarted(); }
