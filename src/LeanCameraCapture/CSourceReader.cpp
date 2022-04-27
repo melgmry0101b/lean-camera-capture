@@ -369,7 +369,6 @@ finalizeAndDrain:
     }
 
 done:
-    // If `MF_E_TRANSFORM_NEED_MORE_INPUT` return success, otherwise return the hresult
     if (FAILED(hr))
     {
         throw std::system_error{ hr, std::system_category(), exWhatString };
