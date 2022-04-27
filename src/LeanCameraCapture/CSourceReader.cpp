@@ -15,6 +15,8 @@
 
 #include "CSourceReader.h"
 
+using namespace std::string_literals;
+
 using namespace LeanCameraCapture::Native;
 
 // ==============================
@@ -66,6 +68,8 @@ HRESULT CSourceReader::OnReadSample(
 {
     HRESULT hr{ hrStatus };
 
+    std::string exWhatString{};
+
     IMFSample       *pOutputSample{ nullptr };
     IMFMediaBuffer  *pBuffer{ nullptr };
 
@@ -75,30 +79,41 @@ HRESULT CSourceReader::OnReadSample(
     EnterCriticalSection(&m_criticalSection);
 
     // Check if hr is failed
-    if (FAILED(hr)) { goto done; }
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error passed from IMFSourceReader.");
 
     // Read from the sample if available
     if (pSample)
     {
         // Convert the buffer to RGB32
-        hr = ProcessorProcessSample(0, pSample, &pOutputSample);
-        if (FAILED(hr)) { goto done; }
+        try
+        {
+            ProcessorProcessSample(0, pSample, &pOutputSample);
+        }
+        catch (const std::system_error &ex)
+        {
+            hr = ex.code().value();
+
+            exWhatString = std::string{ MAKE_EX_STR("Error occurred while processing sample.") }
+                + "\nWith Error: " + ex.what() + " (" + std::to_string(ex.code().value()) + ")";
+
+            goto done;
+        }
 
         // Get the buffer for the frame from the sample if the buffer is set
         if (pOutputSample)
         {
             hr = pOutputSample->GetBufferByIndex(0, &pBuffer);
-            if (FAILED(hr)) { goto done; }
+            CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFSample::GetBufferByIndex().");
 
             // Lock the buffer
             CBufferLock buffer{ pBuffer };
             hr = buffer.LockBuffer(m_lSrcDefaultStride, m_frameHeight, &pbScanline0, &lStride);
-            if (FAILED(hr)) { goto done; }
+            CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during locking buffer.");
 
             // Copy the frame
             // Note that here we are multiplying with 4 as we are using RGB32 (4 byte) format
             hr = MFCopyImage(m_frameBuffer.get(), m_frameWidth, pbScanline0, lStride, m_frameWidth * 4, m_frameHeight);
-            if (FAILED(hr)) { goto done; }
+            CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCopyImage().");
 
             // TODO: Call handlers
         }
@@ -175,12 +190,13 @@ void CSourceReader::FreeResources()
 // ProcessorProcessOutput
 // --------------------------------------------------------------------
 
-HRESULT CSourceReader::ProcessorProcessOutput(
+void CSourceReader::ProcessorProcessOutput(
     DWORD dwOutputStreamID,
     IMFSample **ppOutputSample
     )
 {
     HRESULT hr{ S_OK };
+    std::string exWhatString{ };
 
     DWORD dwProcessOutputStatus{ 0 };
     MFT_OUTPUT_STREAM_INFO outputStreamInfo{ 0 };
@@ -190,7 +206,7 @@ HRESULT CSourceReader::ProcessorProcessOutput(
     IMFSample *pOutputSample{ nullptr };
 
     hr = m_pProcessor->GetOutputStreamInfo(dwOutputStreamID, &outputStreamInfo);
-    if (FAILED(hr)) { goto done; }
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFTransform::GetOutputStreamInfo().");
 
     // Check if the sample should be allocated by us
     if ((outputStreamInfo.dwFlags & (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES))
@@ -198,15 +214,15 @@ HRESULT CSourceReader::ProcessorProcessOutput(
     {
         // Create buffer
         hr = MFCreateAlignedMemoryBuffer(outputStreamInfo.cbSize, outputStreamInfo.cbAlignment, &pOutputBuffer);
-        if (FAILED(hr)) { goto done; }
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateAlignedMemoryBuffer().");
 
         // Create the output sample
         hr = MFCreateSample(&pOutputSample);
-        if (FAILED(hr)) { goto done; }
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateSample().");
 
         // Add buffer to the sample
         hr = pOutputSample->AddBuffer(pOutputBuffer);
-        if (FAILED(hr)) { goto done; }
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFSample::AddBuffer().");
     }
 
     // Get the output
@@ -215,7 +231,7 @@ HRESULT CSourceReader::ProcessorProcessOutput(
     outputDataBuffer.dwStatus = 0;
     outputDataBuffer.pEvents = nullptr;
     hr = m_pProcessor->ProcessOutput(0, 1, &outputDataBuffer, &dwProcessOutputStatus);
-    if (FAILED(hr)) { goto done; }
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFTransfer::ProcessOutput().");
 
     // set the output pointer if the caller is willing to receive the sample, and is available to begin with!
     if (ppOutputSample
@@ -231,34 +247,50 @@ HRESULT CSourceReader::ProcessorProcessOutput(
 
 done:
     SafeRelease(&pOutputBuffer);
-    return hr;
+
+    if (FAILED(hr))
+    {
+        throw std::system_error{ hr, std::system_category(), exWhatString };
+    }
 }
 
 // --------------------------------------------------------------------
 // ProcessorProcessSample
 // --------------------------------------------------------------------
 
-HRESULT CSourceReader::ProcessorProcessSample(
+void CSourceReader::ProcessorProcessSample(
     DWORD dwStreamID,
     IMFSample *pInputSample,
     IMFSample **ppOutputSample
-    )
+)
 {
     assert(pInputSample != nullptr);
     assert(ppOutputSample != nullptr);
 
     HRESULT hr{ S_OK };
+    std::string exWhatString{ };
 
     IMFSample *pOutputSample{ nullptr };
 
     hr = m_pProcessor->ProcessMessage(MFT_MESSAGE_NOTIFY_BEGIN_STREAMING, 0);
-    if (FAILED(hr)) { goto done; }
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFTransform::ProcessMessage().");
 
     hr = m_pProcessor->ProcessInput(dwStreamID, pInputSample, 0);
-    if (FAILED(hr)) { goto finalizeAndDrain; }
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, finalizeAndDrain, exWhatString, "Error occurred during IMFTransform::ProcessInput().");
 
-    hr = ProcessorProcessOutput(dwStreamID, &pOutputSample);
-    if (FAILED(hr)) { goto finalizeAndDrain; }
+    try
+    {
+        ProcessorProcessOutput(dwStreamID, &pOutputSample);
+    }
+    catch (const std::system_error &ex)
+    {
+        hr = ex.code().value();
+
+        exWhatString = std::string{ MAKE_EX_STR("Error occurred while processing output.") }
+        + "\nWith Error: " + ex.what() + " (" + std::to_string(ex.code().value()) + ")";
+
+        goto finalizeAndDrain;
+    }
 
     if (ppOutputSample)
     {
@@ -272,20 +304,76 @@ HRESULT CSourceReader::ProcessorProcessSample(
 
 finalizeAndDrain:
     hr = m_pProcessor->ProcessMessage(MFT_MESSAGE_NOTIFY_END_OF_STREAM, 0);
-    if (FAILED(hr)) { goto done; }
+    if (FAILED(hr))
+    {
+        if (exWhatString.empty())
+        {
+            exWhatString = MAKE_EX_STR("Error occurred during IMFTransform::ProcessMessage().");
+        }
+        else
+        {
+            exWhatString = std::string{ MAKE_EX_STR("Error occurred during IMFTransform::ProcessMessage().") }
+                + "\nWith Error: " + exWhatString;
+        }
+
+        goto done;
+    }
 
     hr = m_pProcessor->ProcessMessage(MFT_MESSAGE_COMMAND_DRAIN, 0);
-    if (FAILED(hr)) { goto done; }
-
-    while ((hr = ProcessorProcessOutput(dwStreamID, nullptr)) != MF_E_TRANSFORM_NEED_MORE_INPUT)
+    if (FAILED(hr))
     {
-        // Other failures other than `MF_E_TRANSFORM_NEED_MORE_INPUT`
-        if (FAILED(hr)) { goto done; }
+        if (exWhatString.empty())
+        {
+            exWhatString = MAKE_EX_STR("Error occurred during IMFTransform::ProcessMessage().");
+        }
+        else
+        {
+            exWhatString = std::string{ MAKE_EX_STR("Error occurred during IMFTransform::ProcessMessage().") }
+            + "\nWith Error: " + exWhatString;
+        }
+
+        goto done;
+    }
+
+    hr = S_OK;
+    while (true)
+    {
+        try
+        {
+            ProcessorProcessOutput(dwStreamID, nullptr);
+        }
+        catch (const std::system_error &ex)
+        {
+            hr = ex.code().value();
+            if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
+            {
+                // Draining the MFT succeeded
+                hr = S_OK;
+            }
+            else
+            {
+                if (exWhatString.empty())
+                {
+                    exWhatString = std::string{ MAKE_EX_STR("Error occurred while draining processor.") }
+                        + "\nWith Error: " + ex.what() + " (" + std::to_string(ex.code().value()) + ")";
+                }
+                else
+                {
+                    exWhatString = std::string{ MAKE_EX_STR("Error occurred while draining processor.") }
+                        + "\nWith Error: " + ex.what() + " (" + std::to_string(ex.code().value()) + ")"
+                        + "\nWith Error: " + exWhatString;
+                }
+            }
+            goto done;
+        }
     }
 
 done:
     // If `MF_E_TRANSFORM_NEED_MORE_INPUT` return success, otherwise return the hresult
-    return (hr == MF_E_TRANSFORM_NEED_MORE_INPUT) ? S_OK : hr;
+    if (FAILED(hr))
+    {
+        throw std::system_error{ hr, std::system_category(), exWhatString };
+    }
 }
 
 // ==============================
@@ -298,11 +386,7 @@ done:
 
 HRESULT CSourceReader::ReadFrame()
 {
-    HRESULT hr{ S_OK };
-
-    EnterCriticalSection(&m_criticalSection);
-
-    hr = m_pSourceReader->ReadSample(
+    return m_pSourceReader->ReadSample(
             static_cast<DWORD>(MF_SOURCE_READER_FIRST_VIDEO_STREAM),
             0,
             nullptr,
@@ -310,10 +394,6 @@ HRESULT CSourceReader::ReadFrame()
             nullptr,
             nullptr
             );
-
-    LeaveCriticalSection(&m_criticalSection);
-
-    return hr;
 }
 
 // --------------------------------------------------------------------
@@ -355,11 +435,7 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
 
     // Create the media source for the device
     hr = m_pDevice->ActivateObject(IID_PPV_ARGS(&pMediaSource));
-    if (FAILED(hr))
-    {
-        exWhatString = "Error occurred during IMFActivate::ActivateObject().";
-        goto done;
-    }
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFActivate::ActivateObject().");
 
     // Get the symbolic link
     hr = m_pDevice->GetAllocatedString(
@@ -367,11 +443,7 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
         &m_pwszSymbolicLink,
         &m_cchSymbolicLink
         );
-    if (FAILED(hr))
-    {
-        exWhatString = "Error occurred during IMFActivate::GetAllocatedString().";
-        goto done;
-    }
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFActivate::GetAllocatedString().");
 
     // ---
     // --- Create the source reader
@@ -379,28 +451,17 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
     
     // Create attributes to hold settings with 2 settings' slots
     hr = MFCreateAttributes(&pAttributes, 2);
-    if (FAILED(hr))
-    {
-        exWhatString = "Error occurred during MFCreateAttributes().";
-        goto done;
-    }
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateAttributes().");
+
     hr = pAttributes->SetUINT32(MF_READWRITE_DISABLE_CONVERTERS, true);
-    if (FAILED(hr))
-    {
-        exWhatString = "Error occurred during IMFAttributes::SetUINT32().";
-        goto done;
-    }
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFAttributes::SetUINT32().");
 
     // Set the an attribute slot for this class instance as callback for events e.g. OnReadSample
     hr = pAttributes->SetUnknown(
         MF_SOURCE_READER_ASYNC_CALLBACK,
         this
         );
-    if (FAILED(hr))
-    {
-        exWhatString = "Error occurred during IMFAttributes::SetUnknown().";
-        goto done;
-    }
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFAttributes::SetUnknown().");
 
     // Create source reader for the media source using the attributes
     hr = MFCreateSourceReaderFromMediaSource(
@@ -408,11 +469,7 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
         pAttributes,
         &m_pSourceReader
         );
-    if (FAILED(hr))
-    {
-        exWhatString = "Error occurred during MFCreateSourceReaderFromMediaSource().";
-        goto done;
-    }
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateSourceReaderFromMediaSource().");
 
     // ---
     // --- Find the suitable codec for the video to RGB32
@@ -431,18 +488,10 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
             i,
             &pMediaType
             );
-        if (FAILED(hr))
-        {
-            exWhatString = "Could not find suitable codec converting into RGB32. IMFSourceReader::GetNativeMediaType().";
-            goto done;
-        }
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Could not find suitable codec converting into RGB32. IMFSourceReader::GetNativeMediaType().");
 
         hr = pMediaType->GetGUID(MF_MT_SUBTYPE, &outputSubtype);
-        if (FAILED(hr))
-        {
-            exWhatString = "Error occurred during IMFMediaType::GetGUID().";
-            goto done;
-        }
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFMediaType::GetGUID().");
 
         inputInfo.guidSubtype = outputSubtype;
 
@@ -455,11 +504,7 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
             &pMFTCLSIDs,
             &MFTCLSIDsCount
             );
-        if (FAILED(hr))
-        {
-            exWhatString = "Error occurred during MFTEnum().";
-            goto done;
-        }
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFTEnum().");
 
         // We found a processor
         if (MFTCLSIDsCount > 0) { break; }
@@ -470,25 +515,35 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
 
     // Create the processor
     hr = CoCreateInstance(pMFTCLSIDs[0], nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pProcessor));
-    if (FAILED(hr))
-    {
-        exWhatString = "Error occurred while creating video processor using CoCreateInstance().";
-        goto done;
-    }
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred while creating video processor using CoCreateInstance().");
 
     // Set the media type for the processor
-    hr = SetVideoProcessorOutputForInputMediaType(m_pProcessor, pMediaType, MFVideoFormat_RGB32);
-    if (FAILED(hr))
+    try
     {
-        exWhatString = "Error occurred while preparing the video processor for the media types.";
+        SetVideoProcessorOutputForInputMediaType(m_pProcessor, pMediaType, MFVideoFormat_RGB32);
+    }
+    catch (const std::system_error &ex)
+    {
+        hr = ex.code().value();
+
+        exWhatString = std::string{ MAKE_EX_STR("Error occurred while preparing the video processor for the media types.") }
+            + "\nWith Error: " + ex.what() + " (" + std::to_string(ex.code().value()) + ")";
+
         goto done;
     }
 
     // Get the DefaultStride, Width, Height for the frames
-    hr = GetWidthHeightDefaultStrideForMediaType(pMediaType, &m_lSrcDefaultStride, &m_frameWidth, &m_frameHeight);
-    if (FAILED(hr))
+    try
     {
-        exWhatString = "Error occurred during retrieving Width, Height, and DefualtStride for media type.";
+        GetWidthHeightDefaultStrideForMediaType(pMediaType, &m_lSrcDefaultStride, &m_frameWidth, &m_frameHeight);
+    }
+    catch (const std::system_error &ex)
+    {
+        hr = ex.code().value();
+
+        exWhatString = std::string{ MAKE_EX_STR("Error occurred during retrieving Width, Height, and DefualtStride for media type.") }
+        + "\nWith Error: " + ex.what() + " (" + std::to_string(ex.code().value()) + ")";
+
         goto done;
     }
 
@@ -499,7 +554,7 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
     }
     catch (const std::bad_alloc &/*ex*/)
     {
-        exWhatString = "Error occurred while allocating memory for the frame buffer.";
+        exWhatString = MAKE_EX_STR("Error occurred while allocating memory for the frame buffer.");
         hr = E_OUTOFMEMORY;
         goto done;
     }
@@ -529,7 +584,7 @@ done:
 // SetVideoProcessorInputAndOuputMediaTypes [static]
 // --------------------------------------------------------------------
 
-HRESULT CSourceReader::SetVideoProcessorOutputForInputMediaType(
+void CSourceReader::SetVideoProcessorOutputForInputMediaType(
     IMFTransform *pProcessor,
     IMFMediaType *pInputMediaType,
     const GUID guidOutputVideoSubtype
@@ -540,22 +595,23 @@ HRESULT CSourceReader::SetVideoProcessorOutputForInputMediaType(
     assert(guidOutputVideoSubtype != GUID_NULL);
 
     HRESULT hr{ S_OK };
+    std::string exWhatString{ };
     GUID guidIndexVideoSubtype{ GUID_NULL };
 
     IMFMediaType *pOutputMediaType{ nullptr };
 
     // Set the input type for the first stream
     hr = pProcessor->SetInputType(0, pInputMediaType, 0);
-    if (FAILED(hr)) { goto done; }
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFTransform::SetInputType().");
 
     //Loop for the output type
     for (DWORD dwTypeIndex = 0; ; dwTypeIndex++)
     {
         hr = pProcessor->GetOutputAvailableType(0, dwTypeIndex, &pOutputMediaType);
-        if (FAILED(hr)) { goto done; }
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFTransform::GetOutputAvailableType().");
 
         hr = pOutputMediaType->GetGUID(MF_MT_SUBTYPE, &guidIndexVideoSubtype);
-        if (FAILED(hr)) { goto done; }
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFMediaType::GetGUID().");
 
         if (guidIndexVideoSubtype == guidOutputVideoSubtype) { break; }
 
@@ -565,23 +621,27 @@ HRESULT CSourceReader::SetVideoProcessorOutputForInputMediaType(
 
     // Set the output type
     hr = pProcessor->SetOutputType(0, pOutputMediaType, 0);
-    if (FAILED(hr)) { goto done; } // Be consistent even if not necessary!
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFTransform::SetOutputType().");
 
 done:
     SafeRelease(&pOutputMediaType);
-    return hr;
+
+    if (FAILED(hr))
+    {
+        throw std::system_error{ hr, std::system_category(), exWhatString };
+    }
 }
 
 // --------------------------------------------------------------------
 // GetWidthHeightDefaultStrideForMediaType [static]
 // --------------------------------------------------------------------
 
-HRESULT CSourceReader::GetWidthHeightDefaultStrideForMediaType(
+void CSourceReader::GetWidthHeightDefaultStrideForMediaType(
     IMFMediaType *pMediaType,
     LONG *plDefaultStride,
     UINT32 *pWidth,
     UINT32 *pHeight
-)
+    ) noexcept(false)
 {
     // As a note here for using `assert`:
     //  We use asserts when we are dealing with private code, not API code,
@@ -595,6 +655,8 @@ HRESULT CSourceReader::GetWidthHeightDefaultStrideForMediaType(
     assert(pHeight != nullptr);
 
     HRESULT hr{ S_OK };
+    std::string exWhatString{ };
+
     GUID mediaSubtype{ GUID_NULL };
 
     LONG lStride{ 0 };
@@ -603,7 +665,7 @@ HRESULT CSourceReader::GetWidthHeightDefaultStrideForMediaType(
 
     // Get the width and height for the frame
     hr = MFGetAttributeSize(pMediaType, MF_MT_FRAME_SIZE, &width, &height);
-    if (FAILED(hr)) { goto done; }
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFGetAttributeSize().");
 
     // Try get the default stride
     // WARN: we are using reinterpret_cast here, the docs state:
@@ -615,10 +677,10 @@ HRESULT CSourceReader::GetWidthHeightDefaultStrideForMediaType(
     {
         // Try to calculate the default stride.
         hr = pMediaType->GetGUID(MF_MT_SUBTYPE, &mediaSubtype);
-        if (FAILED(hr)) { goto done; }
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFMediaType::GetGUID().");
 
         hr = MFGetStrideForBitmapInfoHeader(mediaSubtype.Data1, width, &lStride);
-        if (FAILED(hr)) { goto done; }
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFGetStrideForBitmapInfoHeader().");
 
         // Set the attribute for later reference if needed
         (void)pMediaType->SetUINT32(MF_MT_DEFAULT_STRIDE, static_cast<UINT32>(lStride));
@@ -629,5 +691,8 @@ HRESULT CSourceReader::GetWidthHeightDefaultStrideForMediaType(
     *pHeight = height;
 
 done:
-    return hr;
+    if (FAILED(hr))
+    {
+        throw std::system_error{ hr, std::system_category(), exWhatString };
+    }
 }

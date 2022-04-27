@@ -78,10 +78,12 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);__SOURCE_FILENAME__="%(Filename)%(Extension)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp14</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <UseFullPaths>true</UseFullPaths>
+      <OmitDefaultLibName>false</OmitDefaultLibName>
     </ClCompile>
     <Link>
       <AdditionalDependencies>mfplat.lib;mf.lib;mfreadwrite.lib;mfuuid.lib;d3d9.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -97,10 +99,12 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_DEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);$(VersionInfoPreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);$(VersionInfoPreprocessorDefinitions);__SOURCE_FILENAME__="%(Filename)%(Extension)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp14</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <UseFullPaths>true</UseFullPaths>
+      <OmitDefaultLibName>false</OmitDefaultLibName>
     </ClCompile>
     <Link>
       <AdditionalDependencies>mfplat.lib;mf.lib;mfreadwrite.lib;mfuuid.lib;d3d9.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -114,10 +118,12 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);$(VersionInfoPreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);$(VersionInfoPreprocessorDefinitions);__SOURCE_FILENAME__="%(Filename)%(Extension)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp14</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <UseFullPaths>true</UseFullPaths>
+      <OmitDefaultLibName>false</OmitDefaultLibName>
     </ClCompile>
     <Link>
       <AdditionalDependencies>mfplat.lib;mf.lib;mfreadwrite.lib;mfuuid.lib;d3d9.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -132,10 +138,12 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);$(VersionInfoPreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);$(VersionInfoPreprocessorDefinitions);__SOURCE_FILENAME__="%(Filename)%(Extension)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpp14</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <UseFullPaths>true</UseFullPaths>
+      <OmitDefaultLibName>false</OmitDefaultLibName>
     </ClCompile>
     <Link>
       <AdditionalDependencies>mfplat.lib;mf.lib;mfreadwrite.lib;mfuuid.lib;d3d9.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -152,6 +160,7 @@
     <ClInclude Include="CBufferLock.hpp" />
     <ClInclude Include="CSourceReader.h" />
     <ClInclude Include="leancamercapture.h" />
+    <ClInclude Include="macros.h" />
     <ClInclude Include="resource_macros.h" />
     <ClInclude Include="mfmethods.h" />
     <ClInclude Include="resource.h" />

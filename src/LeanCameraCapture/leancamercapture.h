@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include <string>
 #include <memory>
 #include <cmath>
 #include <cassert>
@@ -32,6 +33,7 @@
 #include <mftransform.h>
 #include <Mferror.h>
 
+#include "macros.h"
 #include "saferelease.h"
 #include "mfmethods.h"
 

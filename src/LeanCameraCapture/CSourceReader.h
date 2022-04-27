@@ -60,8 +60,8 @@ namespace LeanCameraCapture
             void InitializeForDevice(IMFActivate *pActivate) noexcept(false);
             HRESULT ReadFrame();
 
-            UINT32 getFrameWidth() { return m_frameWidth; }
-            UINT32 getFrameHeight() { return m_frameHeight; }
+            UINT32 getFrameWidth() const { return m_frameWidth; }
+            UINT32 getFrameHeight() const { return m_frameHeight; }
 
             // ---
             // --- Destructor
@@ -72,33 +72,33 @@ namespace LeanCameraCapture
         private:
             void FreeResources();
 
-            HRESULT ProcessorProcessOutput(
+            void ProcessorProcessOutput(
                 DWORD dwOutputStreamID,
                 IMFSample **ppOutputSample
-                );
+                ) noexcept(false);
 
-            HRESULT ProcessorProcessSample(
+            void ProcessorProcessSample(
                 DWORD dwStreamID,
                 IMFSample *pInputSample,
                 IMFSample **ppOutputSample
-            );
+                ) noexcept(false);
 
             // ---
             // --- Static Methods
             // ---
 
-            static HRESULT GetWidthHeightDefaultStrideForMediaType(
+            static void GetWidthHeightDefaultStrideForMediaType(
                 IMFMediaType *pMediaType,
                 LONG *plDefaultStride,
                 UINT32 *pWidth,
                 UINT32 *pHeight
-                );
+                ) noexcept(false);
 
-            static HRESULT SetVideoProcessorOutputForInputMediaType(
+            static void SetVideoProcessorOutputForInputMediaType(
                 IMFTransform *pProcessor,
                 IMFMediaType *pInputMediaType,
                 const GUID guidOutputVideoSubtype
-                );
+                ) noexcept(false);
 
             /* === Data Members === */
         private:
