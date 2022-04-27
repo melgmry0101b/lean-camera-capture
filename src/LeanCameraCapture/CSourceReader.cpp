@@ -416,7 +416,7 @@ void CSourceReader::ReadFrame()
         throw std::logic_error{ "Instance's source reader is null." };
     }
 
-    if (!GetIsMediaFoundationStarted)
+    if (!GetIsMediaFoundationStarted())
     {
         throw std::logic_error{ "Media Foundation hasn't started." };
     }

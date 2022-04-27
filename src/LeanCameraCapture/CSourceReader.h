@@ -154,7 +154,7 @@ namespace LeanCameraCapture
             UINT32                  m_frameWidth;
             UINT32                  m_frameHeight;
 
-            std::unique_ptr<BYTE*>  m_frameBuffer;
+            std::unique_ptr<BYTE[]> m_frameBuffer;
 
             WCHAR                   *m_pwszSymbolicLink;
             UINT32                  m_cchSymbolicLink;
