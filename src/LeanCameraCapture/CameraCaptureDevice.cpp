@@ -30,7 +30,7 @@ using namespace LeanCameraCapture;
 ReadOnlyCollection<CameraCaptureDevice ^> ^CameraCaptureDevice::GetCameraCaptureDevices()
 {
     // Check if Media Foundation is running
-    if (!CameraCaptureManager::Started)
+    if (!CameraCaptureManager::IsStarted)
     {
         throw gcnew CameraCaptureException{ "CameraCaptureManager has not been started." };
     }
@@ -103,7 +103,7 @@ CameraCaptureDevice::CameraCaptureDevice(IMFActivate *device) :
     m_pDevice{ device }
 {
     assert(device != nullptr);
-    assert(CameraCaptureManager::Started == true);
+    assert(CameraCaptureManager::IsStarted == true);
 
     device->AddRef();
 
