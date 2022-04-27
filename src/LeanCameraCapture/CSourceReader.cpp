@@ -115,7 +115,10 @@ HRESULT CSourceReader::OnReadSample(
             hr = MFCopyImage(m_frameBuffer.get(), m_frameWidth, pbScanline0, lStride, m_frameWidth * 4, m_frameHeight);
             CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCopyImage().");
 
-            // TODO: Call handlers
+            if (m_pReadSampleSuccessCallback)
+            {
+                (*m_pReadSampleSuccessCallback)(m_frameBuffer.get(), m_frameWidth, m_frameHeight, 4);
+            }
         }
     }
 
@@ -125,7 +128,10 @@ done:
 
     if (FAILED(hr))
     {
-        // TODO: Call error callback
+        if (m_pReadSampleFailCallback)
+        {
+            (*m_pReadSampleFailCallback)(hr, exWhatString);
+        }
     }
 
     LeaveCriticalSection(&m_criticalSection);
@@ -148,7 +154,9 @@ CSourceReader::CSourceReader() :
     m_frameHeight{ 0 },
     m_frameBuffer{ nullptr },
     m_pwszSymbolicLink{ nullptr },
-    m_cchSymbolicLink{ 0 }
+    m_cchSymbolicLink{ 0 },
+    m_pReadSampleSuccessCallback{ nullptr },
+    m_pReadSampleFailCallback{ nullptr }
 {
     InitializeCriticalSection(&m_criticalSection);
 }
@@ -378,6 +386,24 @@ done:
 // ==============================
 // ====== Public Functions ======
 // ==============================
+
+// --------------------------------------------------------------------
+// SetReadFrameSuccessCallback
+// --------------------------------------------------------------------
+
+void CSourceReader::SetReadFrameSuccessCallback(READ_SAMPLE_SUCCESS_HANDLER pCallback)
+{
+    m_pReadSampleSuccessCallback = pCallback;
+}
+
+// --------------------------------------------------------------------
+// SetReadFrameFailCallback
+// --------------------------------------------------------------------
+
+void CSourceReader::SetReadFrameFailCallback(READ_SAMPLE_FAIL_HANDLER pCallback)
+{
+    m_pReadSampleFailCallback = pCallback;
+}
 
 // --------------------------------------------------------------------
 // ReadFrame

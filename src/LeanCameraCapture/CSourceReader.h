@@ -19,6 +19,40 @@ namespace LeanCameraCapture
 {
     namespace Native
     {
+        // ========================================
+        // ====== Function Pointers typedefs ======
+        // ========================================
+
+        /// <summary>
+        /// Handler definition for OnReadSample success callback
+        ///
+        /// pbBuffer        => BYTE* points to the buffer
+        /// widthInPixels   => UINT32 tells the buffer width in pixels
+        /// heightInPixels  => UINT32 tells the buffer height in pixels
+        /// bytesPerPixel   => UINT32 tells how many bytes per pixel
+        /// </summary>
+        typedef void (*READ_SAMPLE_SUCCESS_HANDLER)(
+            const BYTE *pbBuffer,
+            UINT32 widthInPixels,
+            UINT32 heightInPixels,
+            UINT32 bytesPerPixel)
+            ;
+
+        /// <summary>
+        /// Handler definition for OnReadSample fail callback
+        ///
+        /// hr          => const HRESULT for the underlying WinAPI error
+        /// errorString => const std::string& describes the error occurred
+        /// </summary>
+        typedef void (*READ_SAMPLE_FAIL_HANDLER)(
+            const HRESULT hr,
+            const std::string& errorString
+            );
+
+        // ============================================
+        // ====== CSourceReader Class Definition ======
+        // ============================================
+
         class CSourceReader : public IMFSourceReaderCallback
         {
             /* === Member Functions === */
@@ -59,6 +93,9 @@ namespace LeanCameraCapture
 
             void InitializeForDevice(IMFActivate *pActivate) noexcept(false);
             HRESULT ReadFrame();
+
+            void SetReadFrameSuccessCallback(READ_SAMPLE_SUCCESS_HANDLER pCallback);
+            void SetReadFrameFailCallback(READ_SAMPLE_FAIL_HANDLER pCallback);
 
             UINT32 getFrameWidth() const { return m_frameWidth; }
             UINT32 getFrameHeight() const { return m_frameHeight; }
@@ -121,6 +158,9 @@ namespace LeanCameraCapture
 
             WCHAR                   *m_pwszSymbolicLink;
             UINT32                  m_cchSymbolicLink;
+
+            READ_SAMPLE_SUCCESS_HANDLER m_pReadSampleSuccessCallback;
+            READ_SAMPLE_FAIL_HANDLER    m_pReadSampleFailCallback;
         };
     }
 }
