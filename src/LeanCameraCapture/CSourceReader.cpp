@@ -409,9 +409,21 @@ void CSourceReader::SetReadFrameFailCallback(READ_SAMPLE_FAIL_HANDLER pCallback)
 // ReadFrame
 // --------------------------------------------------------------------
 
-HRESULT CSourceReader::ReadFrame()
+void CSourceReader::ReadFrame()
 {
-    return m_pSourceReader->ReadSample(
+    if (!m_pSourceReader)
+    {
+        throw std::logic_error{ "Instance's source reader is null." };
+    }
+
+    if (!GetIsMediaFoundationStarted)
+    {
+        throw std::logic_error{ "Media Foundation hasn't started." };
+    }
+
+    HRESULT hr{ S_OK };
+
+    hr = m_pSourceReader->ReadSample(
             static_cast<DWORD>(MF_SOURCE_READER_FIRST_VIDEO_STREAM),
             0,
             nullptr,
@@ -419,6 +431,11 @@ HRESULT CSourceReader::ReadFrame()
             nullptr,
             nullptr
             );
+
+    if (FAILED(hr))
+    {
+        throw std::system_error{ hr, std::system_category(), "Error occurred during IMFSourceReader::ReadSample()." };
+    }
 }
 
 // --------------------------------------------------------------------
@@ -431,6 +448,16 @@ HRESULT CSourceReader::ReadFrame()
 
 void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
 {
+    if (!pActivate)
+    {
+        throw std::logic_error{ "pActivate is null." };
+    }
+
+    if (!GetIsMediaFoundationStarted())
+    {
+        throw std::logic_error{ "Media foundation hasn't started." };
+    }
+
     // This method should be called only once
     if (m_pDevice)
     {

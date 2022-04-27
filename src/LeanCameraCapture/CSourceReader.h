@@ -92,7 +92,7 @@ namespace LeanCameraCapture
             // ---
 
             void InitializeForDevice(IMFActivate *pActivate) noexcept(false);
-            HRESULT ReadFrame();
+            void ReadFrame() noexcept(false);
 
             void SetReadFrameSuccessCallback(READ_SAMPLE_SUCCESS_HANDLER pCallback);
             void SetReadFrameFailCallback(READ_SAMPLE_FAIL_HANDLER pCallback);
