@@ -13,12 +13,20 @@
 
 #pragma once
 
+// ==========================================
+// ====== C++ Standard Library Headers ======
+// ==========================================
+
 #include <string>
 #include <memory>
 #include <cmath>
 #include <cassert>
 #include <stdexcept>
 #include <system_error>
+
+// =================================
+// ====== Windows API Headers ======
+// =================================
 
 // WIN32_LEAN_AND_MEAN isn't much of a performance boost for
 //  compilation these days, but helps cleaning the global namespace
@@ -33,12 +41,25 @@
 #include <mftransform.h>
 #include <Mferror.h>
 
+// ================================================
+// ====== Native C++ Headers Without Classes ======
+// ================================================
+
 #include "macros.h"
 #include "saferelease.h"
 #include "mfmethods.h"
+#include "devicechangenotif.h"
+
+// =============================================
+// ====== Native C++ Headers With Classes ======
+// =============================================
 
 #include "CBufferLock.hpp"
 #include "CSourceReader.h"
+
+// =================================
+// ====== Managed C++ Headers ======
+// =================================
 
 #include "CameraCaptureException.hpp"
 #include "CameraCaptureManager.h"

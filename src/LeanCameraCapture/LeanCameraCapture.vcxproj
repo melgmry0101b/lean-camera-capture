@@ -159,6 +159,7 @@
     <ClInclude Include="CameraCaptureReader.h" />
     <ClInclude Include="CBufferLock.hpp" />
     <ClInclude Include="CSourceReader.h" />
+    <ClInclude Include="devicechangenotif.h" />
     <ClInclude Include="leancamercapture.h" />
     <ClInclude Include="macros.h" />
     <ClInclude Include="resource_macros.h" />
@@ -172,6 +173,7 @@
     <ClCompile Include="CameraCaptureManager.cpp" />
     <ClCompile Include="CameraCaptureReader.cpp" />
     <ClCompile Include="CSourceReader.cpp" />
+    <ClCompile Include="devicechangenotif.cpp" />
     <ClCompile Include="mfmethods.cpp" />
   </ItemGroup>
   <ItemGroup>
