@@ -23,6 +23,8 @@
 #include <cassert>
 #include <stdexcept>
 #include <system_error>
+#include <map>
+#include <algorithm>
 
 // =================================
 // ====== Windows API Headers ======
@@ -40,6 +42,8 @@
 #include <mfreadwrite.h>
 #include <mftransform.h>
 #include <Mferror.h>
+#include <Dbt.h>
+#include <ks.h>
 
 // ================================================
 // ====== Native C++ Headers Without Classes ======

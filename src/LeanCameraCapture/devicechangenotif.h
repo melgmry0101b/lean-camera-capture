@@ -14,3 +14,34 @@
 #pragma once
 
 #include "leancamercapture.h"
+
+/// <summary>
+/// Function pointer definition for the device change notification handlers
+/// </summary>
+typedef void (*CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER)();
+
+/// <summary>
+/// [Internal][Native] Register capture device change notification listener on a window handler
+/// </summary>
+void RegisterCaptureDeviceChangeNotificationForHwnd(HWND hwnd) noexcept(false);
+
+/// <summary>
+/// [Internal][Native] Remove the registered listener
+/// </summary>
+void UnregisterRegisteredCaptureDeviceChangeNotification(HWND hwnd) noexcept(false);
+
+/// <summary>
+/// [Internal][Native] Add a handler for a specific device capture change notification
+/// </summary>
+void AddCaptureDeviceChangeNotificationHandler(
+    const WCHAR *pwszDeviceSymbolicLink,
+    CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER pCallback
+    );
+
+/// <summary>
+/// [Internal][Native] Remove handler
+/// </summary>
+void RemoveCaptureDeviceChangeNotificationHandler(
+    const WCHAR *pwszDeviceSymbolicLink,
+    CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER pCallback
+    );
