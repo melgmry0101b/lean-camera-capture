@@ -130,10 +130,13 @@ void AddCaptureDeviceChangeNotificationHandler(
     )
 {
     // Check if no entry is already present
-    auto entryFindIterator = std::find(
+    auto entryFindIterator = std::find_if(
         g_mapHandlers.begin(),
         g_mapHandlers.end(),
-        std::pair<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER>(pwszDeviceSymbolicLink, pCallback)
+        [&pCallback](std::pair<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER> item)
+        {
+            return item.second == pCallback;
+        }
     );
 
     // Entry already present
@@ -152,11 +155,16 @@ void RemoveCaptureDeviceChangeNotificationHandler(
     CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER pCallback
     )
 {
-    auto entryFindIterator = std::find(
+    auto entryFindIterator = std::find_if(
         g_mapHandlers.begin(),
         g_mapHandlers.end(),
-        std::pair<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER>(pwszDeviceSymbolicLink, pCallback)
+        [&pCallback](std::pair<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER> item)
+        {
+            return item.second == pCallback;
+        }
     );
+
+    if (entryFindIterator == g_mapHandlers.end()) { return; }
 
     g_mapHandlers.erase(entryFindIterator);
 }
