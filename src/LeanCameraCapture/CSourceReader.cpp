@@ -602,7 +602,7 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
     // Create the buffer for the frames
     try
     {
-        m_frameBuffer = std::make_unique<BYTE[]>(m_frameWidth * m_frameHeight);
+        m_frameBuffer = std::make_unique<BYTE[]>(static_cast<size_t>(m_frameWidth) * static_cast<size_t>(m_frameHeight));
     }
     catch (const std::bad_alloc &/*ex*/)
     {
