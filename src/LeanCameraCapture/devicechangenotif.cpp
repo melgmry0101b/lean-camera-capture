@@ -23,10 +23,38 @@
 static HDEVNOTIFY g_HDevNofity{ nullptr };
 
 // Map for the devices' symbolic link and handlers
-static std::multimap<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER> g_mapHandlers{};
+static std::multimap<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER> g_mmapHandlers{};
 
 // The original WindowProc before subclassing
 static WNDPROC g_wndprocOriginal{ nullptr };
+
+// ============================================
+// ====== Device Change Handler Function ======
+// ============================================
+
+// --------------------------------------------------------------------
+// OnCaptureDeviceChangeNotification
+// --------------------------------------------------------------------
+
+static void OnCaptureDeviceChangeNotification(PDEV_BROADCAST_HDR pHdr)
+{
+    DEV_BROADCAST_DEVICEINTERFACE *pDi{ nullptr };
+
+    if (!pHdr) { return; }
+    if (pHdr->dbch_devicetype != DBT_DEVTYP_DEVICEINTERFACE) { return; }
+
+    pDi = reinterpret_cast<DEV_BROADCAST_DEVICEINTERFACE *>(pHdr);
+
+    for (const auto& item : g_mmapHandlers)
+    {
+        if (!item.first) { continue; }
+        if (!item.second) { continue; }
+        if (_wcsicmp(item.first, pDi->dbcc_name) != 0) { continue; }
+
+        // Call the handler
+        (*(item.second))();
+    }
+}
 
 // ========================================
 // ====== WindowProc For Subclassing ======
@@ -41,6 +69,7 @@ static LRESULT CALLBACK DeviceChangeNotificationWindowProc(HWND hwnd, UINT uMsg,
     switch (uMsg)
     {
     case WM_DEVICECHANGE:
+        OnCaptureDeviceChangeNotification(reinterpret_cast<PDEV_BROADCAST_HDR>(lParam));
         break;
     }
 
@@ -131,19 +160,23 @@ void AddCaptureDeviceChangeNotificationHandler(
 {
     // Check if no entry is already present
     auto entryFindIterator = std::find_if(
-        g_mapHandlers.begin(),
-        g_mapHandlers.end(),
-        [&pCallback](std::pair<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER> item)
+        g_mmapHandlers.begin(),
+        g_mmapHandlers.end(),
+        [&pwszDeviceSymbolicLink, &pCallback](std::pair<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER> item)
         {
-            return item.second == pCallback;
+            // We are comparing pointers
+            if (item.first != pwszDeviceSymbolicLink) { return false; }
+            if (item.second != pCallback) { return false; }
+
+            return true;
         }
     );
 
     // Entry already present
-    if (entryFindIterator == g_mapHandlers.end()) { return; }
+    if (entryFindIterator != g_mmapHandlers.end()) { return; }
 
     // Insert the entry
-    g_mapHandlers.insert({ pwszDeviceSymbolicLink, pCallback });
+    g_mmapHandlers.insert({ pwszDeviceSymbolicLink, pCallback });
 }
 
 // --------------------------------------------------------------------
@@ -156,15 +189,20 @@ void RemoveCaptureDeviceChangeNotificationHandler(
     )
 {
     auto entryFindIterator = std::find_if(
-        g_mapHandlers.begin(),
-        g_mapHandlers.end(),
-        [&pCallback](std::pair<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER> item)
+        g_mmapHandlers.begin(),
+        g_mmapHandlers.end(),
+        [&pwszDeviceSymbolicLink, &pCallback](std::pair<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER> item)
         {
-            return item.second == pCallback;
+            // We are comparing pointers
+            if (item.first != pwszDeviceSymbolicLink) { return false; }
+            if (item.second != pCallback) { return false; }
+
+            return true;
         }
     );
 
-    if (entryFindIterator == g_mapHandlers.end()) { return; }
+    // Entry not present
+    if (entryFindIterator == g_mmapHandlers.end()) { return; }
 
-    g_mapHandlers.erase(entryFindIterator);
+    g_mmapHandlers.erase(entryFindIterator);
 }
