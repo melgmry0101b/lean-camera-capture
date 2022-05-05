@@ -66,7 +66,7 @@
 
   <!-- Publish path, set IsPublishable to false to exclude project from being published -->
   <PropertyGroup>
-    <PublishDir>$(MSBuildThisFileDirectory)$(CustomPublishFolderName)$(Version)\$(Configuration)\$(Platform)\$(ProjectRootName)\</PublishDir>
+    <PublishDir>$(MSBuildThisFileDirectory)$(CustomPublishFolderName)$(Version)\$(Configuration)\$(ProjectRootName)\$(Platform)\</PublishDir>
   </PropertyGroup>
 
   <!-- Expose internal to test assembly -->
