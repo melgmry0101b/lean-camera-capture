@@ -71,7 +71,7 @@ BEGIN
             VALUE "FileDescription", "Lean Camera Capture core library"
             VALUE "FileVersion", STRINGIZE_EXPRESSION(_APP_VER_FILE_VERSION)
             VALUE "InternalName", "LeanCameraCapture.dll"
-            VALUE "LegalCopyright", "(C) Mohammed Elghamry 2021"
+            VALUE "LegalCopyright", "(C) Mohammed Elghamry"
             VALUE "OriginalFilename", "LeanCameraCapture.dll"
             VALUE "ProductName", "Lean Camera Capture"
             VALUE "ProductVersion", STRINGIZE_EXPRESSION(_APP_VER_INFORMATIONAL_VERSION)
