@@ -22,7 +22,7 @@
     -->
     <Product>Lean Camera Capture</Product>
     <Company>Mohammed Elghamry</Company>
-    <Copyright>(C) Mohammed Elghamry 2021</Copyright>
+    <Copyright>(C) Mohammed Elghamry</Copyright>
   </PropertyGroup>
 
   <!-- Version Information -->
@@ -32,7 +32,7 @@
     <VersionMinor>1</VersionMinor>
     <VersionPatch>0</VersionPatch>
     <!-- Always add '-' (dash) before VersionPrerelease for semantic versioning -->
-    <VersionPrerelease>-dev.2</VersionPrerelease>
+    <VersionPrerelease>-alpha.dev</VersionPrerelease>
     <!-- ====== Only change before this line ====== -->
 
     <VersionDate>$([System.DateTime]::UtcNow.ToString("yyyyMMddHHmmss"))</VersionDate>
