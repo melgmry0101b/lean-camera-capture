@@ -25,11 +25,11 @@ using namespace LeanCameraCapture;
 // Start
 // --------------------------------------------------------------------
 
-void CameraCaptureManager::Start()
+void CameraCaptureManager::Start(System::IntPtr MainHWnd)
 {
     try
     {
-        StartMediaFoundation();
+        StartMediaFoundation(static_cast<HWND>(MainHWnd.ToPointer()));
     }
     catch (const std::system_error &ex)
     {

@@ -18,7 +18,7 @@
 /// <summary>
 /// [Internal][Native] Start the media foundation
 /// </summary>
-void StartMediaFoundation() noexcept(false);
+void StartMediaFoundation(HWND hwndMain) noexcept(false);
 
 /// <summary>
 /// [Internal][Native] Stop the media foundation
@@ -29,3 +29,8 @@ void StopMediaFoundation() noexcept(false);
 /// [Internal][Native] Gets the state of Media Foundation
 /// </summary>
 bool GetIsMediaFoundationStarted();
+
+/// <summary>
+/// [Internal][Native] Get registered Main HWND.
+/// </summary>
+HWND GetMainHwnd();

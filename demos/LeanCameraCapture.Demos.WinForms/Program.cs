@@ -14,9 +14,15 @@ namespace LeanCameraCapture.Demos.WinForms
         [STAThread]
         private static void Main()
         {
+            Application.SetHighDpiMode(HighDpiMode.SystemAware);
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+
+            var mainForm = new MainForm();
+
             try
             {
-                CameraCaptureManager.Start();
+                CameraCaptureManager.Start(mainForm.Handle);
             }
             catch (CameraCaptureException ex)
             {
@@ -30,10 +36,7 @@ namespace LeanCameraCapture.Demos.WinForms
 
             Application.ApplicationExit += Application_ApplicationExit;
 
-            Application.SetHighDpiMode(HighDpiMode.SystemAware);
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new MainForm());
+            Application.Run(mainForm);
         }
 
         private static void Application_ApplicationExit(object? sender, EventArgs e)

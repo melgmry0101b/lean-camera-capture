@@ -20,6 +20,7 @@
 // =======================================================================
 
 static bool g_IsMediaFoundationStarted{ false };
+static HWND g_hwndMain{ nullptr };
 
 // ======================================
 // ====== Media Foundation Methods ======
@@ -27,10 +28,19 @@ static bool g_IsMediaFoundationStarted{ false };
 
 // --------------------------------------------------------------------
 // StartMediaFoundation
+//
+// This method takes a window handler for the main window where
+//  the library is going to attach its window-based handlers
+//  like device change notification handler. We put this argument
+//  here although it is not required for the process of starting the
+//  media foundation is to streamline the initialization process
+//  for the consumer.
 // --------------------------------------------------------------------
 
-void StartMediaFoundation() noexcept(false)
+void StartMediaFoundation(HWND hwndMain) noexcept(false)
 {
+    assert(hwndMain != nullptr);
+
     if (g_IsMediaFoundationStarted) { return; }
 
     HRESULT hr{ S_OK };
@@ -48,6 +58,7 @@ void StartMediaFoundation() noexcept(false)
     }
 
     g_IsMediaFoundationStarted = true;
+    g_hwndMain = hwndMain;
 }
 
 // --------------------------------------------------------------------
@@ -69,6 +80,7 @@ void StopMediaFoundation() noexcept(false)
     CoUninitialize();
 
     g_IsMediaFoundationStarted = false;
+    g_hwndMain = nullptr;
 }
 
 // --------------------------------------------------------------------
@@ -78,4 +90,13 @@ void StopMediaFoundation() noexcept(false)
 bool GetIsMediaFoundationStarted()
 {
     return g_IsMediaFoundationStarted;
+}
+
+// --------------------------------------------------------------------
+// GetMainHwnd
+// --------------------------------------------------------------------
+
+HWND GetMainHwnd()
+{
+    return g_hwndMain;
 }

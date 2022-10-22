@@ -24,7 +24,8 @@ namespace LeanCameraCapture
         /// <summary>
         /// Start the infrastructure for the library (Initialize COM and Media Foundation)
         /// </summary>
-        static void Start();
+        /// <param name="MainHWnd">HWND for main window that can be used to receive notifications.</param>
+        static void Start(System::IntPtr MainHWnd);
 
         /// <summary>
         /// Stop the infrastructure for the library (Stop Media Foundation and Uninitialize COM)
