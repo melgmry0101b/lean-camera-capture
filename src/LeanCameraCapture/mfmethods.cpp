@@ -31,10 +31,7 @@ static HWND g_hwndMain{ nullptr };
 //
 // This method takes a window handler for the main window where
 //  the library is going to attach its window-based handlers
-//  like device change notification handler. We put this argument
-//  here although it is not required for the process of starting the
-//  media foundation is to streamline the initialization process
-//  for the consumer.
+//  like device change notification handler.
 // --------------------------------------------------------------------
 
 void StartMediaFoundation(HWND hwndMain) noexcept(false)
@@ -57,8 +54,11 @@ void StartMediaFoundation(HWND hwndMain) noexcept(false)
         throw std::system_error{ hr, std::system_category(), "Error occurred during MFStartup." };
     }
 
-    g_IsMediaFoundationStarted = true;
+    // Register capture device change notification for the main window
+    RegisterCaptureDeviceChangeNotificationForHwnd(hwndMain);
     g_hwndMain = hwndMain;
+
+    g_IsMediaFoundationStarted = true;
 }
 
 // --------------------------------------------------------------------
@@ -71,6 +71,13 @@ void StopMediaFoundation() noexcept(false)
 
     HRESULT hr{ S_OK };
 
+    // Unregister capture device change notification for main window
+    if (g_hwndMain)
+    {
+        UnregisterRegisteredCaptureDeviceChangeNotification(g_hwndMain);
+        g_hwndMain = nullptr;
+    }
+
     hr = MFShutdown();
     if (FAILED(hr))
     {
@@ -80,7 +87,6 @@ void StopMediaFoundation() noexcept(false)
     CoUninitialize();
 
     g_IsMediaFoundationStarted = false;
-    g_hwndMain = nullptr;
 }
 
 // --------------------------------------------------------------------

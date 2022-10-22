@@ -141,7 +141,11 @@ void UnregisterRegisteredCaptureDeviceChangeNotification(HWND hwnd) noexcept(fal
             reinterpret_cast<LONG>(g_wndprocOriginal)
 #endif
     );
-    if (returnResult == 0 && GetLastError() != ERROR_SUCCESS)
+
+    // Here we are ignoring `ERROR_INVALID_WINDOW_HANDLE` as the consumer may unregister the handler
+    //  after the owner window has been destroyed and the handle became invalid.
+    DWORD dwErrorCode{ GetLastError() };
+    if (returnResult == 0 && dwErrorCode != ERROR_SUCCESS && dwErrorCode != ERROR_INVALID_WINDOW_HANDLE)
     {
         throw std::system_error{ E_FAIL, std::system_category(), "Couldn't restore the original WndProc." };
     }
