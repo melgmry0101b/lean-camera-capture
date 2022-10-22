@@ -50,6 +50,7 @@
 // ================================================
 
 #include "macros.h"
+#include "errcodes.h"
 #include "saferelease.h"
 #include "mfmethods.h"
 #include "devicechangenotif.h"
@@ -65,6 +66,7 @@
 // ====== Managed C++ Headers ======
 // =================================
 
+#include "CameraCaptureErrorCodes.hpp"
 #include "CameraCaptureException.hpp"
 #include "CameraCaptureManager.h"
 #include "CameraCaptureDevice.h"

@@ -166,12 +166,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CameraCaptureDevice.h" />
+    <ClInclude Include="CameraCaptureErrorCodes.hpp" />
     <ClInclude Include="CameraCaptureException.hpp" />
     <ClInclude Include="CameraCaptureManager.h" />
     <ClInclude Include="CameraCaptureReader.h" />
     <ClInclude Include="CBufferLock.hpp" />
     <ClInclude Include="CSourceReader.h" />
     <ClInclude Include="devicechangenotif.h" />
+    <ClInclude Include="errcodes.h" />
     <ClInclude Include="leancamercapture.h" />
     <ClInclude Include="macros.h" />
     <ClInclude Include="resource_macros.h" />
