@@ -147,6 +147,9 @@ void UnregisterRegisteredCaptureDeviceChangeNotification(HWND hwnd) noexcept(fal
     }
 
     UnregisterDeviceNotification(g_HDevNofity);
+
+    // Set the registered notification pointer to nullptr
+    g_HDevNofity = nullptr;
 }
 
 // --------------------------------------------------------------------
