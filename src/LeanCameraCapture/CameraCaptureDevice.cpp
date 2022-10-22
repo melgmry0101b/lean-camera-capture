@@ -80,12 +80,12 @@ ReadOnlyCollection<CameraCaptureDevice ^> ^CameraCaptureDevice::GetCameraCapture
 done:
     SafeRelease(&pAttributes);
 
-    CoTaskMemFree(ppDevices);
-
     for (UINT32 i = 0; i < devicesCount; i++)
     {
         SafeRelease(&ppDevices[i]);
     }
+
+    CoTaskMemFree(ppDevices);
 
     if (FAILED(hr))
     {
@@ -145,7 +145,7 @@ CameraCaptureDevice::!CameraCaptureDevice()
 {
     // Release Unmanaged <Native> Resources
 
-    // Assigning to a local variable avoiding
+    // Copying pointer to a local variable avoiding
     //  Error C2784 "could not deduce template argument for 'T **' from 'cli::interior_ptr<IMFActivate *>'"
     IMFActivate *pDevice{ m_pDevice };
     SafeRelease(&pDevice);
