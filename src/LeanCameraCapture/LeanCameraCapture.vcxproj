@@ -79,7 +79,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;_DEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);__SOURCE_FILENAME__="%(Filename)%(Extension)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <TreatWarningAsError>true</TreatWarningAsError>
       <UseFullPaths>true</UseFullPaths>
@@ -119,7 +119,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>WIN32;NDEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);$(VersionInfoPreprocessorDefinitions);__SOURCE_FILENAME__="%(Filename)%(Extension)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <TreatWarningAsError>true</TreatWarningAsError>
       <UseFullPaths>true</UseFullPaths>
@@ -139,7 +139,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
       <PreprocessorDefinitions>NDEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);$(VersionInfoPreprocessorDefinitions);__SOURCE_FILENAME__="%(Filename)%(Extension)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <TreatWarningAsError>true</TreatWarningAsError>
       <UseFullPaths>true</UseFullPaths>
