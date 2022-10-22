@@ -36,7 +36,7 @@ namespace LeanCameraCapture.Demos.WinForms
             Application.Run(new MainForm());
         }
 
-        private static void Application_ApplicationExit(object sender, EventArgs e)
+        private static void Application_ApplicationExit(object? sender, EventArgs e)
         {
             try
             {
