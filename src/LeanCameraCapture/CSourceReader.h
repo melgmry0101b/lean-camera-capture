@@ -99,6 +99,8 @@ namespace LeanCameraCapture
 
             UINT32 getFrameWidth() const { return m_frameWidth; }
             UINT32 getFrameHeight() const { return m_frameHeight; }
+            bool getIsInitialized() const { return m_bIsInitialized; }
+            bool getIsAvailable() const { return m_bIsAvailable; }
 
             // ---
             // --- Destructor
@@ -119,6 +121,8 @@ namespace LeanCameraCapture
                 IMFSample *pInputSample,
                 IMFSample **ppOutputSample
                 ) noexcept(false);
+
+            void CaptureDeviceChangeNotificationHandler();
 
             // ---
             // --- Static Methods
@@ -145,6 +149,10 @@ namespace LeanCameraCapture
                                                             //  but its not supported under C++/CLI
                                                             //  and no need to hop into mental gymnastics to enable it.
 
+            bool                    m_bIsInitialized;       // True after the first initialization.
+            bool                    m_bIsAvailable;         // True after the first initialization
+                                                            //  and is set to false in case of error or device loss.
+
             IMFActivate             *m_pDevice;             // Reference for the used capture device
             IMFSourceReader         *m_pSourceReader;       // Reader for samples from the capture device
             IMFTransform            *m_pProcessor;          // Processing the input type into RGB32 output type
@@ -161,6 +169,11 @@ namespace LeanCameraCapture
 
             READ_SAMPLE_SUCCESS_HANDLER m_pReadSampleSuccessCallback;
             READ_SAMPLE_FAIL_HANDLER    m_pReadSampleFailCallback;
+
+            // Here we are keeping a lambda function that calls `CaptureDeviceChangeNotificationHandler`
+            //  when invoked from the devincechnagenotif map. This is used to be able to pass a member function
+            //  to std::function, and to keep single unique pointer for the handler to be removed down the road.
+            CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER m_pDeviceChangeNotifHandler;
         };
     }
 }

@@ -146,6 +146,8 @@ done:
 CSourceReader::CSourceReader() :
     m_nRefCount{ 1 },
     m_criticalSection{},
+    m_bIsInitialized{ false },
+    m_bIsAvailable{ false },
     m_pDevice{ nullptr },
     m_pSourceReader{ nullptr },
     m_pProcessor{ nullptr },
@@ -156,9 +158,13 @@ CSourceReader::CSourceReader() :
     m_pwszSymbolicLink{ nullptr },
     m_cchSymbolicLink{ 0 },
     m_pReadSampleSuccessCallback{ nullptr },
-    m_pReadSampleFailCallback{ nullptr }
+    m_pReadSampleFailCallback{ nullptr },
+    m_pDeviceChangeNotifHandler{ nullptr }
 {
     InitializeCriticalSection(&m_criticalSection);
+
+    // Set device change notification handler
+    m_pDeviceChangeNotifHandler = [this] { CaptureDeviceChangeNotificationHandler(); };
 }
 
 // ========================
@@ -183,6 +189,9 @@ void CSourceReader::FreeResources()
 {
     EnterCriticalSection(&m_criticalSection);
 
+    // Remove the device change notification handler
+    RemoveCaptureDeviceChangeNotificationHandler(m_pwszSymbolicLink, &m_pDeviceChangeNotifHandler);
+
     SafeRelease(&m_pProcessor);
     SafeRelease(&m_pSourceReader);
     SafeRelease(&m_pDevice);
@@ -190,8 +199,18 @@ void CSourceReader::FreeResources()
     CoTaskMemFree(m_pwszSymbolicLink);
     m_pwszSymbolicLink = nullptr;
     m_cchSymbolicLink = 0;
+    m_bIsAvailable = false;
 
     LeaveCriticalSection(&m_criticalSection);
+}
+
+// --------------------------------------------------------------------
+// CaptureDeviceChangeNotificationHandler
+// --------------------------------------------------------------------
+
+void CSourceReader::CaptureDeviceChangeNotificationHandler()
+{
+
 }
 
 // --------------------------------------------------------------------
@@ -411,6 +430,16 @@ void CSourceReader::SetReadFrameFailCallback(READ_SAMPLE_FAIL_HANDLER pCallback)
 
 void CSourceReader::ReadFrame()
 {
+    if (!m_bIsInitialized)
+    {
+        throw std::logic_error{ "Source reader hasn't been initialized." };
+    }
+
+    if (!m_bIsAvailable)
+    {
+        throw std::logic_error{ "Capture device isn't available." };
+    }
+
     if (!m_pSourceReader)
     {
         throw std::logic_error{ "Instance's source reader is null." };
@@ -459,7 +488,7 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
     }
 
     // This method should be called only once
-    if (m_pDevice)
+    if (m_bIsInitialized)
     {
         throw std::logic_error{ "This instance of CSourceReader is already initialized for a device." };
     }
@@ -610,6 +639,12 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
         hr = E_OUTOFMEMORY;
         goto done;
     }
+
+    // Set the capture device change notification handler
+    AddCaptureDeviceChangeNotificationHandler(m_pwszSymbolicLink, &m_pDeviceChangeNotifHandler);
+
+    m_bIsInitialized = true;
+    m_bIsAvailable = true;
 
 done:
     if (FAILED(hr) && pMediaSource) { pMediaSource->Shutdown(); }
