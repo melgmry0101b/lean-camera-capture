@@ -23,7 +23,7 @@
 static HDEVNOTIFY g_HDevNofity{ nullptr };
 
 // Map for the devices' symbolic link and handlers
-static std::multimap<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER> g_mmapHandlers{};
+static std::multimap<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER*> g_mmapHandlers{};
 
 // The original WindowProc before subclassing
 static WNDPROC g_wndprocOriginal{ nullptr };
@@ -162,18 +162,18 @@ void UnregisterRegisteredCaptureDeviceChangeNotification(HWND hwnd) noexcept(fal
 
 void AddCaptureDeviceChangeNotificationHandler(
     const WCHAR *pwszDeviceSymbolicLink,
-    CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER pCallback
+    CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER *ppCallback
     )
 {
     // Check if no entry is already present
     auto entryFindIterator = std::find_if(
         g_mmapHandlers.begin(),
         g_mmapHandlers.end(),
-        [&pwszDeviceSymbolicLink, &pCallback](std::pair<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER> item)
+        [&pwszDeviceSymbolicLink, &ppCallback](std::pair<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER*> item)
         {
             // We are comparing pointers
             if (item.first != pwszDeviceSymbolicLink) { return false; }
-            if (item.second != pCallback) { return false; }
+            if (item.second != ppCallback) { return false; }
 
             return true;
         }
@@ -183,7 +183,7 @@ void AddCaptureDeviceChangeNotificationHandler(
     if (entryFindIterator != g_mmapHandlers.end()) { return; }
 
     // Insert the entry
-    g_mmapHandlers.insert({ pwszDeviceSymbolicLink, pCallback });
+    g_mmapHandlers.insert({ pwszDeviceSymbolicLink, ppCallback });
 }
 
 // --------------------------------------------------------------------
@@ -192,17 +192,17 @@ void AddCaptureDeviceChangeNotificationHandler(
 
 void RemoveCaptureDeviceChangeNotificationHandler(
     const WCHAR *pwszDeviceSymbolicLink,
-    CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER pCallback
+    CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER *ppCallback
     )
 {
     auto entryFindIterator = std::find_if(
         g_mmapHandlers.begin(),
         g_mmapHandlers.end(),
-        [&pwszDeviceSymbolicLink, &pCallback](std::pair<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER> item)
+        [&pwszDeviceSymbolicLink, &ppCallback](std::pair<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER*> item)
         {
             // We are comparing pointers
             if (item.first != pwszDeviceSymbolicLink) { return false; }
-            if (item.second != pCallback) { return false; }
+            if (item.second != ppCallback) { return false; }
 
             return true;
         }

@@ -25,6 +25,7 @@
 #include <system_error>
 #include <map>
 #include <algorithm>
+#include <functional>
 
 // =================================
 // ====== Windows API Headers ======

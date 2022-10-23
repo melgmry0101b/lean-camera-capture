@@ -18,7 +18,7 @@
 /// <summary>
 /// Function pointer definition for the device change notification handlers
 /// </summary>
-typedef void (*CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER)();
+typedef std::function<void()> CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER;
 
 /// <summary>
 /// [Internal][Native] Register capture device change notification listener on a window handler
@@ -35,7 +35,7 @@ void UnregisterRegisteredCaptureDeviceChangeNotification(HWND hwnd) noexcept(fal
 /// </summary>
 void AddCaptureDeviceChangeNotificationHandler(
     const WCHAR *pwszDeviceSymbolicLink,
-    CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER pCallback
+    CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER *ppCallback
     );
 
 /// <summary>
@@ -43,5 +43,5 @@ void AddCaptureDeviceChangeNotificationHandler(
 /// </summary>
 void RemoveCaptureDeviceChangeNotificationHandler(
     const WCHAR *pwszDeviceSymbolicLink,
-    CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER pCallback
+    CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER *ppCallback
     );
