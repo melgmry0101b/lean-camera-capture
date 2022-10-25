@@ -117,7 +117,7 @@ HRESULT CSourceReader::OnReadSample(
 
             if (m_pReadSampleSuccessCallback)
             {
-                (*m_pReadSampleSuccessCallback)(m_frameBuffer.get(), m_frameWidth, m_frameHeight, 4);
+                m_pReadSampleSuccessCallback(m_frameBuffer.get(), m_frameWidth, m_frameHeight, 4);
             }
         }
     }
@@ -130,7 +130,7 @@ done:
     {
         if (m_pReadSampleFailCallback)
         {
-            (*m_pReadSampleFailCallback)(hr, exWhatString);
+            m_pReadSampleFailCallback(hr, exWhatString);
         }
     }
 
@@ -206,11 +206,20 @@ void CSourceReader::FreeResources()
 
 // --------------------------------------------------------------------
 // CaptureDeviceChangeNotificationHandler
+//
+// On changes to the attached capture device, we will set the reader
+//  as unavailable so the consumer should initialize a new reader
+//  for a new device.
 // --------------------------------------------------------------------
 
 void CSourceReader::CaptureDeviceChangeNotificationHandler()
 {
+    EnterCriticalSection(&m_criticalSection);
 
+    // Set the the reader as unavailable
+    m_bIsAvailable = false;
+
+    LeaveCriticalSection(&m_criticalSection);
 }
 
 // --------------------------------------------------------------------
@@ -430,24 +439,30 @@ void CSourceReader::SetReadFrameFailCallback(READ_SAMPLE_FAIL_HANDLER pCallback)
 
 void CSourceReader::ReadFrame()
 {
+    EnterCriticalSection(&m_criticalSection);
+
     if (!m_bIsInitialized)
     {
+        LeaveCriticalSection(&m_criticalSection);
         throw std::logic_error{ "Source reader hasn't been initialized." };
-    }
-
-    if (!m_bIsAvailable)
-    {
-        throw std::logic_error{ "Capture device isn't available." };
     }
 
     if (!m_pSourceReader)
     {
+        LeaveCriticalSection(&m_criticalSection);
         throw std::logic_error{ "Instance's source reader is null." };
     }
 
     if (!GetIsMediaFoundationStarted())
     {
+        LeaveCriticalSection(&m_criticalSection);
         throw std::logic_error{ "Media Foundation hasn't started." };
+    }
+
+    if (!m_bIsAvailable)
+    {
+        LeaveCriticalSection(&m_criticalSection);
+        throw std::system_error{ LEANCAMERACAPTURE_E_DEVICELOST, std::system_category(), "Capture device isn't available." };
     }
 
     HRESULT hr{ S_OK };
@@ -460,6 +475,8 @@ void CSourceReader::ReadFrame()
             nullptr,
             nullptr
             );
+
+    LeaveCriticalSection(&m_criticalSection);
 
     if (FAILED(hr))
     {

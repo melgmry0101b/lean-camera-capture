@@ -23,31 +23,27 @@ namespace LeanCameraCapture
         // ====== Function Pointers typedefs ======
         // ========================================
 
-        /// <summary>
         /// Handler definition for OnReadSample success callback
         ///
         /// pbBuffer        => BYTE* points to the buffer
         /// widthInPixels   => UINT32 tells the buffer width in pixels
         /// heightInPixels  => UINT32 tells the buffer height in pixels
         /// bytesPerPixel   => UINT32 tells how many bytes per pixel
-        /// </summary>
-        typedef void (*READ_SAMPLE_SUCCESS_HANDLER)(
+        typedef std::function<void(
             const BYTE *pbBuffer,
             UINT32 widthInPixels,
             UINT32 heightInPixels,
-            UINT32 bytesPerPixel)
-            ;
+            UINT32 bytesPerPixel
+            )> READ_SAMPLE_SUCCESS_HANDLER;
 
-        /// <summary>
         /// Handler definition for OnReadSample fail callback
         ///
         /// hr          => const HRESULT for the underlying WinAPI error
         /// errorString => const std::string& describes the error occurred
-        /// </summary>
-        typedef void (*READ_SAMPLE_FAIL_HANDLER)(
+        typedef std::function<void(
             const HRESULT hr,
-            const std::string& errorString
-            );
+            const std::string &errorString
+            )> READ_SAMPLE_FAIL_HANDLER;
 
         // ============================================
         // ====== CSourceReader Class Definition ======
