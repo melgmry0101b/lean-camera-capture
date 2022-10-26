@@ -71,4 +71,6 @@
 #include "CameraCaptureException.hpp"
 #include "CameraCaptureManager.h"
 #include "CameraCaptureDevice.h"
+#include "ReadSampleFailedEventArgs.hpp"
+#include "ReadSampleSucceededEventArgs.hpp"
 #include "CameraCaptureReader.h"

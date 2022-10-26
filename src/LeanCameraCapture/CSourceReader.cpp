@@ -216,7 +216,7 @@ void CSourceReader::CaptureDeviceChangeNotificationHandler()
 {
     EnterCriticalSection(&m_criticalSection);
 
-    // Set the the reader as unavailable
+    // Set the reader as unavailable
     m_bIsAvailable = false;
 
     LeaveCriticalSection(&m_criticalSection);

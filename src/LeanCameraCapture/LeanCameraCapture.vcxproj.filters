@@ -60,6 +60,12 @@
     <ClInclude Include="CameraCaptureErrorCodes.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ReadSampleSucceededEventArgs.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ReadSampleFailedEventArgs.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp">
