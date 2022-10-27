@@ -29,11 +29,15 @@ namespace LeanCameraCapture
             System::UInt32 widthInPixels,
             System::UInt32 heightInPixels,
             System::UInt32 bytesPerPixel) :
-            m_buffer{ buffer },
             m_widthInPixels{ widthInPixels },
             m_heightInPixels{ heightInPixels },
             m_bytesPerPixel{ bytesPerPixel }
-        { }
+        {
+            // We set the array in the body of the constructor not in the initializer list
+            //  as a workaround for error `C2440`:
+            //  `Initialization of a managed array with an initializer list is not supported in this context`
+            m_buffer = buffer;
+        }
 
         /* === Methods === */
     public:
