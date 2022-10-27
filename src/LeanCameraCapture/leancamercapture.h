@@ -26,6 +26,7 @@
 #include <map>
 #include <algorithm>
 #include <functional>
+#include <type_traits>
 
 // =================================
 // ====== Windows API Headers ======
