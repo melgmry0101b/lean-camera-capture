@@ -32,7 +32,7 @@ ReadOnlyCollection<CameraCaptureDevice ^> ^CameraCaptureDevice::GetCameraCapture
     // Check if Media Foundation is running
     if (!CameraCaptureManager::IsStarted)
     {
-        throw gcnew CameraCaptureException{ "CameraCaptureManager has not been started." };
+        throw gcnew CameraCaptureException("CameraCaptureManager has not been started.");
     }
 
     HRESULT hr{ S_OK };
@@ -74,7 +74,7 @@ ReadOnlyCollection<CameraCaptureDevice ^> ^CameraCaptureDevice::GetCameraCapture
     List<CameraCaptureDevice ^> ^cameraCaptureDevices = gcnew List<CameraCaptureDevice ^>();
     for (UINT32 i = 0; i < devicesCount; i++)
     {
-        cameraCaptureDevices->Add(gcnew CameraCaptureDevice{ ppDevices[i] });
+        cameraCaptureDevices->Add(gcnew CameraCaptureDevice(ppDevices[i]));
     }
 
 done:
@@ -89,7 +89,7 @@ done:
 
     if (FAILED(hr))
     {
-        throw gcnew CameraCaptureException{ hr, errorMsg };
+        throw gcnew CameraCaptureException(hr, errorMsg);
     }
 
     return cameraCaptureDevices->AsReadOnly();
@@ -118,10 +118,10 @@ CameraCaptureDevice::CameraCaptureDevice(IMFActivate *device) :
     );
     if (FAILED(hr))
     {
-        throw gcnew CameraCaptureException{ hr, "Error occurred during IMFActivate::GetAllocatedString()." };
+        throw gcnew CameraCaptureException(hr, "Error occurred during IMFActivate::GetAllocatedString().");
     }
 
-    DeviceName = gcnew System::String{ pwszDeviceFriendlyName };
+    DeviceName = gcnew System::String(pwszDeviceFriendlyName);
     CoTaskMemFree(pwszDeviceFriendlyName);
 }
 

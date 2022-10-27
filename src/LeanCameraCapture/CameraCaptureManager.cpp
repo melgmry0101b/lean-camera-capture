@@ -33,7 +33,7 @@ void CameraCaptureManager::Start(System::IntPtr MainHWnd)
     }
     catch (const std::system_error &ex)
     {
-        throw gcnew CameraCaptureException{ ex.code().value(), gcnew System::String{ ex.what() } };
+        throw gcnew CameraCaptureException(ex.code().value(), gcnew System::String{ ex.what() });
     }
 }
 
@@ -49,6 +49,6 @@ void CameraCaptureManager::Stop()
     }
     catch (const std::system_error &ex)
     {
-        throw gcnew CameraCaptureException{ ex.code().value(), gcnew System::String{ ex.what() } };
+        throw gcnew CameraCaptureException(ex.code().value(), gcnew System::String{ ex.what() });
     }
 }
