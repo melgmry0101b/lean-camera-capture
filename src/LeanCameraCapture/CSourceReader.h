@@ -15,6 +15,8 @@
 
 #include "leancamercapture.h"
 
+#pragma managed(push, off)
+
 namespace LeanCameraCapture
 {
     namespace Native
@@ -173,3 +175,5 @@ namespace LeanCameraCapture
         };
     }
 }
+
+#pragma managed(pop)

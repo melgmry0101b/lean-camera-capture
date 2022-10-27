@@ -15,6 +15,8 @@
 
 #include "mfmethods.h"
 
+#pragma managed(push, off)
+
 // =======================================================================
 // ====== Global variable for storing the state of Media Foundation ======
 // =======================================================================
@@ -106,3 +108,5 @@ HWND GetMainHwnd()
 {
     return g_hwndMain;
 }
+
+#pragma managed(pop)

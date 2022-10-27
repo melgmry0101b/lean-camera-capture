@@ -15,6 +15,8 @@
 
 #include "leancamercapture.h"
 
+#pragma managed(push, off)
+
 /// <summary>
 /// [Internal][Native] Start the media foundation
 /// </summary>
@@ -34,3 +36,5 @@ bool GetIsMediaFoundationStarted();
 /// [Internal][Native] Get registered Main HWND.
 /// </summary>
 HWND GetMainHwnd();
+
+#pragma managed(pop)

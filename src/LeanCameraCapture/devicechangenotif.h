@@ -15,6 +15,8 @@
 
 #include "leancamercapture.h"
 
+#pragma managed(push, off)
+
 /// <summary>
 /// Function pointer definition for the device change notification handlers
 /// </summary>
@@ -45,3 +47,5 @@ void RemoveCaptureDeviceChangeNotificationHandler(
     const WCHAR *pwszDeviceSymbolicLink,
     CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER *ppCallback
     );
+
+#pragma managed(pop)

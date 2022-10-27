@@ -15,6 +15,8 @@
 
 #include "CSourceReader.h"
 
+#pragma managed(push, off)
+
 using namespace std::string_literals;
 
 using namespace LeanCameraCapture::Native;
@@ -800,3 +802,5 @@ done:
         throw std::system_error{ hr, std::system_category(), exWhatString };
     }
 }
+
+#pragma managed(pop)

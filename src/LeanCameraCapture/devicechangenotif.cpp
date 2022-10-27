@@ -15,6 +15,8 @@
 
 #include "devicechangenotif.h"
 
+#pragma managed(push, off)
+
 // =====================
 // ====== Globals ======
 // =====================
@@ -213,3 +215,5 @@ void RemoveCaptureDeviceChangeNotificationHandler(
 
     g_mmapHandlers.erase(entryFindIterator);
 }
+
+#pragma managed(pop)

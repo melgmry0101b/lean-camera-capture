@@ -15,6 +15,8 @@
 
 #include "leancamercapture.h"
 
+#pragma managed(push, off)
+
 // Stringize a token
 #define STRINGIZE(x) #x
 // Stringize the evaluated value of a token (if it can be pre-processed)
@@ -30,3 +32,5 @@
         ex_str_var = MAKE_EX_STR(ex_str);                                           \
         goto goto_label;                                                            \
     }
+
+#pragma managed(pop)

@@ -13,6 +13,8 @@
 
 #pragma once
 
+#pragma managed(push, off)
+
 // See: https://docs.microsoft.com/en-us/windows/win32/medfound/saferelease
 
 /// <summary>
@@ -27,3 +29,5 @@ void SafeRelease(T **ppT)
         *ppT = nullptr;
     }
 }
+
+#pragma managed(pop)
