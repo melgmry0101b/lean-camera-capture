@@ -464,7 +464,7 @@ void CSourceReader::ReadFrame()
     if (!m_bIsAvailable)
     {
         LeaveCriticalSection(&m_criticalSection);
-        throw std::system_error{ LEANCAMERACAPTURE_E_DEVICELOST, std::system_category(), "Capture device isn't available." };
+        throw std::system_error{ static_cast<int>(LEANCAMERACAPTURE_E_DEVICELOST), std::system_category(), "Capture device isn't available." };
     }
 
     HRESULT hr{ S_OK };
