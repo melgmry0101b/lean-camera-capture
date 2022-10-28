@@ -35,6 +35,8 @@ CameraCaptureReader::CameraCaptureReader(CameraCaptureDevice ^device) :
         throw gcnew System::ArgumentNullException(STRINGIZE(device));
     }
 
+    m_device = device;
+
     m_lock = gcnew System::Object();
 
     m_CSourceReaderReadFrameSuccessHandler
