@@ -613,6 +613,12 @@ void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
         SafeRelease(&pMediaType);
     }
 
+    if (MFTCLSIDsCount == 0)
+    {
+        hr = E_UNEXPECTED;
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Could not find proper video processor.");
+    }
+
     // Create the processor
     hr = CoCreateInstance(pMFTCLSIDs[0], nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pProcessor));
     CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred while creating video processor using CoCreateInstance().");
@@ -723,6 +729,12 @@ void CSourceReader::SetVideoProcessorOutputForInputMediaType(
 
         // Release for the next iteration
         SafeRelease(&pOutputMediaType);
+    }
+
+    if (!pOutputMediaType)
+    {
+        hr = E_UNEXPECTED;
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "The input media type cannot be processed into a suitable output type.");
     }
 
     // Set the output type
