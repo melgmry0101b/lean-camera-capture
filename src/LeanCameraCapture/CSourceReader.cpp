@@ -683,7 +683,7 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
     // Create the buffer for the frames
     try
     {
-        m_frameBuffer = std::make_unique<BYTE[]>(static_cast<size_t>(m_frameWidth) * static_cast<size_t>(m_frameHeight));
+        m_frameBuffer = std::make_unique<BYTE[]>(static_cast<size_t>(m_frameWidth) * static_cast<size_t>(m_frameHeight) * 4);
     }
     catch (const std::bad_alloc &/*ex*/)
     {
