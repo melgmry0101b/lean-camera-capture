@@ -575,6 +575,9 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
         );
     CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateSourceReaderFromMediaSource().");
 
+    // Release the attributes for the next use
+    SafeRelease(&pAttributes);
+
     // ---
     // --- Find the suitable codec for the video to RGB32
     // ---
