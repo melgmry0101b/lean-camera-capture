@@ -46,6 +46,7 @@
 #include <Mferror.h>
 #include <Dbt.h>
 #include <ks.h>
+#include <crtdbg.h>
 
 // ================================================
 // ====== Native C++ Headers Without Classes ======

@@ -500,6 +500,8 @@ void CSourceReader::ReadFrame()
 
 void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(false)
 {
+    _RPTFW1(_CRT_WARN, L"CSourceReader::InitializeForDevice() called for device with symlink '%s'.\n", pwszDeviceSymbolicLink);
+
     if (!pwszDeviceSymbolicLink)
     {
         throw std::logic_error{ "Device symbolic link is null." };
@@ -549,6 +551,8 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
     // Release the attributes for the next use
     SafeRelease(&pAttributes);
 
+    _RPTFW1(_CRT_WARN, L"Device source created for '%s'.\n", pwszDeviceSymbolicLink);
+
     // ---
     // --- Create the source reader
     // ---
@@ -578,6 +582,8 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
     // Release the attributes for the next use
     SafeRelease(&pAttributes);
 
+    _RPTFW1(_CRT_WARN, L"Source reader created for '%s'.\n", pwszDeviceSymbolicLink);
+
     // ---
     // --- Find the suitable codec for the video to RGB32
     // ---
@@ -602,6 +608,8 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
 
         inputInfo.guidSubtype = outputSubtype;
 
+        _RPTFW2(_CRT_WARN, L"Checking transformer for media type '%d' on '%s'.\n", i, pwszDeviceSymbolicLink);
+
         hr = MFTEnum(
             MFT_CATEGORY_VIDEO_PROCESSOR, // Process from input to output type
             0,              // Reserved
@@ -614,7 +622,11 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
         CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFTEnum().");
 
         // We found a processor
-        if (MFTCLSIDsCount > 0) { break; }
+        if (MFTCLSIDsCount > 0)
+        {
+            _RPTFW2(_CRT_WARN, L"Found transformer for media type '%d' on '%s'.\n", i, pwszDeviceSymbolicLink);
+            break;
+        }
 
         // Free for the next iteration, in case of jump to `done`, a free will be performed there too
         SafeRelease(&pMediaType);
@@ -629,6 +641,8 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
     // Create the processor
     hr = CoCreateInstance(pMFTCLSIDs[0], nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&m_pProcessor));
     CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred while creating video processor using CoCreateInstance().");
+
+    _RPTFW1(_CRT_WARN, L"MFT (Processor) created for '%s'.\n", pwszDeviceSymbolicLink);
 
     // Set the media type for the processor
     try
@@ -645,10 +659,14 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
         goto done;
     }
 
+    _RPTFW1(_CRT_WARN, L"Get frame width and height for '%s'.\n", pwszDeviceSymbolicLink);
+
     // Get the DefaultStride, Width, Height for the frames
     try
     {
         GetWidthHeightDefaultStrideForMediaType(pMediaType, &m_lSrcDefaultStride, &m_frameWidth, &m_frameHeight);
+
+        _RPTFW3(_CRT_WARN, L"Dimensions are w(%d) x h(%d) '%s'.\n", m_frameWidth, m_frameHeight, pwszDeviceSymbolicLink);
     }
     catch (const std::system_error &ex)
     {
@@ -659,6 +677,8 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
 
         goto done;
     }
+
+    _RPTFW1(_CRT_WARN, L"Create frame buffer for '%s'.\n", pwszDeviceSymbolicLink);
 
     // Create the buffer for the frames
     try
@@ -680,6 +700,8 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
 
     m_bIsInitialized = true;
     m_bIsAvailable = true;
+
+    _RPTFW1(_CRT_WARN, L"Initialization completed for '%s'.\n", pwszDeviceSymbolicLink);
 
 done:
     CoTaskMemFree(pMFTCLSIDs);
@@ -713,6 +735,8 @@ void CSourceReader::SetVideoProcessorOutputForInputMediaType(
     assert(pInputMediaType != nullptr);
     assert(guidOutputVideoSubtype != GUID_NULL);
 
+    _RPTF0(_CRT_WARN, "CSourceReader::SetVideoProcessorOutputForInputMediaType() called.\n");
+
     HRESULT hr{ S_OK };
     std::string exWhatString{ };
     GUID guidIndexVideoSubtype{ GUID_NULL };
@@ -732,7 +756,13 @@ void CSourceReader::SetVideoProcessorOutputForInputMediaType(
         hr = pOutputMediaType->GetGUID(MF_MT_SUBTYPE, &guidIndexVideoSubtype);
         CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFMediaType::GetGUID().");
 
-        if (guidIndexVideoSubtype == guidOutputVideoSubtype) { break; }
+        _RPTF1(_CRT_WARN, "Check type matching to process input to output, output type no. '%d'.\n", dwTypeIndex);
+
+        if (guidIndexVideoSubtype == guidOutputVideoSubtype)
+        {
+            _RPTF1(_CRT_WARN, "Found the requested output, on type no. '%d'.\n", dwTypeIndex);
+            break;
+        }
 
         // Release for the next iteration
         SafeRelease(&pOutputMediaType);
@@ -743,6 +773,8 @@ void CSourceReader::SetVideoProcessorOutputForInputMediaType(
         hr = E_UNEXPECTED;
         CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "The input media type cannot be processed into a suitable output type.");
     }
+
+    _RPTF0(_CRT_WARN, "Setting output type for the processor.\n");
 
     // Set the output type
     hr = pProcessor->SetOutputType(0, pOutputMediaType, 0);
