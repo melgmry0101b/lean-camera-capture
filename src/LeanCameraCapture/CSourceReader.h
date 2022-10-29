@@ -99,10 +99,10 @@ namespace LeanCameraCapture
             void SetReadFrameSuccessCallback(READ_SAMPLE_SUCCESS_HANDLER pCallback);
             void SetReadFrameFailCallback(READ_SAMPLE_FAIL_HANDLER pCallback);
 
-            UINT32 getFrameWidth() const { return m_frameWidth; }
-            UINT32 getFrameHeight() const { return m_frameHeight; }
-            bool getIsInitialized() const { return m_bIsInitialized; }
-            bool getIsAvailable() const { return m_bIsAvailable; }
+            UINT32 GetFrameWidth() const { return m_frameWidth; }
+            UINT32 GetFrameHeight() const { return m_frameHeight; }
+            bool GetIsInitialized() const { return m_bIsInitialized; }
+            bool GetIsAvailable() const { return m_bIsAvailable; }
 
             // ---
             // --- Destructor
