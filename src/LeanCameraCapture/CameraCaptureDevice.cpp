@@ -74,7 +74,16 @@ ReadOnlyCollection<CameraCaptureDevice ^> ^CameraCaptureDevice::GetCameraCapture
     List<CameraCaptureDevice ^> ^cameraCaptureDevices = gcnew List<CameraCaptureDevice ^>();
     for (UINT32 i = 0; i < devicesCount; i++)
     {
-        cameraCaptureDevices->Add(gcnew CameraCaptureDevice(ppDevices[i]));
+        try
+        {
+            cameraCaptureDevices->Add(gcnew CameraCaptureDevice(ppDevices[i]));
+        }
+        catch (CameraCaptureException ^ex)
+        {
+            hr = ex->HResult;
+            errorMsg = ex->Message;
+            goto done;
+        }
     }
 
 done:
@@ -99,30 +108,33 @@ done:
 // ====== Constructor ======
 // =========================
 
-CameraCaptureDevice::CameraCaptureDevice(IMFActivate *device) :
-    m_pDevice{ device }
+CameraCaptureDevice::CameraCaptureDevice(IMFActivate *device)
 {
     assert(device != nullptr);
     assert(CameraCaptureManager::IsStarted == true);
 
-    device->AddRef();
-
     HRESULT hr{ S_OK };
-    WCHAR *pwszDeviceFriendlyName{ nullptr };
-    UINT32 cchDeviceFriendlyNameLength{ 0 };
 
+    // Get Device's symbolic link
     hr = device->GetAllocatedString(
-        MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME,
-        &pwszDeviceFriendlyName,
-        &cchDeviceFriendlyNameLength
+        MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK,
+        pin_ptr<WCHAR *>(&m_pwszDeviceSymbolicLink),
+        pin_ptr<UINT32>(&m_cchDeviceSymbolicLink)
     );
     if (FAILED(hr))
     {
-        throw gcnew CameraCaptureException(hr, "Error occurred during IMFActivate::GetAllocatedString().");
+        throw gcnew CameraCaptureException(hr, "Error occurred during retrieving device symbolic link.");
     }
 
-    DeviceName = gcnew System::String(pwszDeviceFriendlyName);
-    CoTaskMemFree(pwszDeviceFriendlyName);
+    hr = device->GetAllocatedString(
+        MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME,
+        pin_ptr<WCHAR *>(&m_pwszDeviceFriendlyName),
+        pin_ptr<UINT32>(&m_cchDeviceFriendlyName)
+    );
+    if (FAILED(hr))
+    {
+        throw gcnew CameraCaptureException(hr, "Error occurred during retrieving device friendly name.");
+    }
 }
 
 // ========================
@@ -145,9 +157,9 @@ CameraCaptureDevice::!CameraCaptureDevice()
 {
     // Release Unmanaged <Native> Resources
 
-    // Copying pointer to a local variable avoiding
-    //  Error C2784 "could not deduce template argument for 'T **' from 'cli::interior_ptr<IMFActivate *>'"
-    IMFActivate *pDevice{ m_pDevice };
-    SafeRelease(&pDevice);
-    m_pDevice = nullptr;
+    CoTaskMemFree(m_pwszDeviceFriendlyName);
+    m_pwszDeviceFriendlyName = nullptr;
+
+    CoTaskMemFree(m_pwszDeviceSymbolicLink);
+    m_pwszDeviceSymbolicLink = nullptr;
 }

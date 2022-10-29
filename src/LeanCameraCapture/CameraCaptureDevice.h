@@ -37,25 +37,34 @@ namespace LeanCameraCapture
         CameraCaptureDevice(IMFActivate *device);
 
         /// <summary>
-        /// [Internal] Get the underlying IMFActivate
+        /// [Internal] Gets native WCHAR pointer of the symbolic link.
         /// </summary>
-        IMFActivate *getUnderlyingIMFActivate() { return m_pDevice; }
+        WCHAR *GetNativeDeviceSymbolicLink() { return m_pwszDeviceSymbolicLink; }
 
         /* === Properties === */
     public:
         /// <summary>
-        /// The name of the camera capture device
+        /// Gets friendly name of the capture device.
         /// </summary>
         property System::String ^DeviceName
         {
-            System::String ^get() { return m_deviceName; }
-        protected:
-            void set(System::String ^val) { m_deviceName = val; }
+            System::String ^get() { return gcnew System::String(m_pwszDeviceFriendlyName); }
+        }
+
+        /// <summary>
+        /// Gets device's symbolic link.
+        /// </summary>
+        property System::String ^DeviceSymbolicLink
+        {
+            System::String ^get() { return gcnew System::String(m_pwszDeviceSymbolicLink); }
         }
 
         /* === Data Members === */
     private:
-        IMFActivate *m_pDevice{ nullptr };
-        System::String ^m_deviceName{ nullptr };
+        WCHAR       *m_pwszDeviceFriendlyName{ nullptr };
+        UINT32      m_cchDeviceFriendlyName{ 0 };
+
+        WCHAR       *m_pwszDeviceSymbolicLink{ nullptr };
+        UINT32      m_cchDeviceSymbolicLink{ 0 };
     };
 }
