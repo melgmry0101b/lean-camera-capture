@@ -172,8 +172,9 @@ void AddCaptureDeviceChangeNotificationHandler(
         g_mmapHandlers.end(),
         [&deviceSymbolicLink, &ppCallback](std::pair<const std::wstring &, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER*> item)
         {
-            // We are comparing pointers
             if (item.first != deviceSymbolicLink) { return false; }
+
+            // We are comparing pointers for the callback
             if (item.second != ppCallback) { return false; }
 
             return true;
@@ -201,8 +202,9 @@ void RemoveCaptureDeviceChangeNotificationHandler(
         g_mmapHandlers.end(),
         [&deviceSymbolicLink, &ppCallback](std::pair<const std::wstring &, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER *> item)
         {
-            // We are comparing pointers
             if (item.first != deviceSymbolicLink) { return false; }
+
+            // We are comparing pointers for the callback
             if (item.second != ppCallback) { return false; }
 
             return true;
