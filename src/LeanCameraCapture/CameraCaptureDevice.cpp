@@ -115,11 +115,17 @@ CameraCaptureDevice::CameraCaptureDevice(IMFActivate *device)
 
     HRESULT hr{ S_OK };
 
+    WCHAR *pwszDeviceSymbolicLink{ nullptr };
+    UINT32 cchDeviceSymbolicLink{ 0 };
+
+    WCHAR *pwszDeviceFriendlyName{ nullptr };
+    UINT32 cchDeviceFriendlyName{ 0 };
+
     // Get Device's symbolic link
     hr = device->GetAllocatedString(
         MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK,
-        pin_ptr<WCHAR *>(&m_pwszDeviceSymbolicLink),
-        pin_ptr<UINT32>(&m_cchDeviceSymbolicLink)
+        &pwszDeviceSymbolicLink,
+        &cchDeviceSymbolicLink
     );
     if (FAILED(hr))
     {
@@ -128,13 +134,19 @@ CameraCaptureDevice::CameraCaptureDevice(IMFActivate *device)
 
     hr = device->GetAllocatedString(
         MF_DEVSOURCE_ATTRIBUTE_FRIENDLY_NAME,
-        pin_ptr<WCHAR *>(&m_pwszDeviceFriendlyName),
-        pin_ptr<UINT32>(&m_cchDeviceFriendlyName)
+        &pwszDeviceFriendlyName,
+        &cchDeviceFriendlyName
     );
     if (FAILED(hr))
     {
         throw gcnew CameraCaptureException(hr, "Error occurred during retrieving device friendly name.");
     }
+
+    m_pwszDeviceSymbolicLink = pwszDeviceSymbolicLink;
+    m_cchDeviceSymbolicLink = cchDeviceSymbolicLink;
+
+    m_pwszDeviceFriendlyName = pwszDeviceFriendlyName;
+    m_cchDeviceFriendlyName = cchDeviceFriendlyName;
 }
 
 // ========================
