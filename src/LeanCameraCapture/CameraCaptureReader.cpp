@@ -110,8 +110,11 @@ void CameraCaptureReader::Close()
     msclr::lock l{ m_lock };
 
     // Release the native source reader
-    pin_ptr<Native::CSourceReader *> pCSourceReader = &m_pCSourceReader;
+    // Copying pointer to a local variable avoiding
+    //  Error C2784 "could not deduce template argument for 'T **' from 'cli::interior_ptr<CSourceReader *>'"
+    Native::CSourceReader *pCSourceReader{ m_pCSourceReader };
     SafeRelease(&pCSourceReader);
+    m_pCSourceReader = nullptr;
 }
 
 void CameraCaptureReader::Reopen()
@@ -221,6 +224,9 @@ CameraCaptureReader::!CameraCaptureReader()
 {
     // Release unmanaged resources.
 
-    pin_ptr<Native::CSourceReader *> pCSourceReader = &m_pCSourceReader;
+    // Copying pointer to a local variable avoiding
+    //  Error C2784 "could not deduce template argument for 'T **' from 'cli::interior_ptr<CSourceReader *>'"
+    Native::CSourceReader *pCSourceReader{ m_pCSourceReader };
     SafeRelease(&pCSourceReader);
+    m_pCSourceReader = nullptr;
 }
