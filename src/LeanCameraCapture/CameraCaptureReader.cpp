@@ -66,7 +66,7 @@ void CameraCaptureReader::Open()
     try
     {
         // Initialize native source reader.
-        newSourceReader->InitializeForDevice(m_device->getUnderlyingIMFActivate());
+        newSourceReader->InitializeForDevice(m_device->GetNativeDeviceSymbolicLink());
     }
     catch (const std::logic_error &ex)
     {

@@ -494,7 +494,7 @@ void CSourceReader::ReadFrame()
 //  done only once per instance.
 // --------------------------------------------------------------------
 
-void CSourceReader::InitializeForDevice(IMFActivate *pActivate) noexcept(false)
+void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(false)
 {
     if (!pActivate)
     {

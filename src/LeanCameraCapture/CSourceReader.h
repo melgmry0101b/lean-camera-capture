@@ -93,7 +93,7 @@ namespace LeanCameraCapture
             // --- CSourceReader methods
             // ---
 
-            void InitializeForDevice(IMFActivate *pActivate) noexcept(false);
+            void InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(false);
             void ReadFrame() noexcept(false);
 
             void SetReadFrameSuccessCallback(READ_SAMPLE_SUCCESS_HANDLER pCallback);
