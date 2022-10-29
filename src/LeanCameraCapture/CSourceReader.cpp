@@ -150,15 +150,14 @@ CSourceReader::CSourceReader() :
     m_criticalSection{},
     m_bIsInitialized{ false },
     m_bIsAvailable{ false },
-    m_pDevice{ nullptr },
+    m_pMediaSource{ nullptr },
     m_pSourceReader{ nullptr },
     m_pProcessor{ nullptr },
     m_lSrcDefaultStride{ 0 },
     m_frameWidth{ 0 },
     m_frameHeight{ 0 },
     m_frameBuffer{ nullptr },
-    m_pwszSymbolicLink{ nullptr },
-    m_cchSymbolicLink{ 0 },
+    m_wstrDeviceSymbolicLink{},
     m_pReadSampleSuccessCallback{ nullptr },
     m_pReadSampleFailCallback{ nullptr },
     m_pDeviceChangeNotifHandler{ nullptr }
@@ -176,6 +175,10 @@ CSourceReader::CSourceReader() :
 CSourceReader::~CSourceReader()
 {
     FreeResources();
+
+    // Remove the device change notification handler
+    RemoveCaptureDeviceChangeNotificationHandler(m_wstrDeviceSymbolicLink, &m_pDeviceChangeNotifHandler);
+
     DeleteCriticalSection(&m_criticalSection);
 }
 
@@ -191,16 +194,17 @@ void CSourceReader::FreeResources()
 {
     EnterCriticalSection(&m_criticalSection);
 
-    // Remove the device change notification handler
-    RemoveCaptureDeviceChangeNotificationHandler(m_pwszSymbolicLink, &m_pDeviceChangeNotifHandler);
-
     SafeRelease(&m_pProcessor);
     SafeRelease(&m_pSourceReader);
-    SafeRelease(&m_pDevice);
 
-    CoTaskMemFree(m_pwszSymbolicLink);
-    m_pwszSymbolicLink = nullptr;
-    m_cchSymbolicLink = 0;
+    // Shutdown the media source before releasing
+    if (m_pMediaSource)
+    {
+        m_pMediaSource->Shutdown();
+    }
+
+    SafeRelease(&m_pMediaSource);
+
     m_bIsAvailable = false;
 
     LeaveCriticalSection(&m_criticalSection);
@@ -496,9 +500,9 @@ void CSourceReader::ReadFrame()
 
 void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(false)
 {
-    if (!pActivate)
+    if (!pwszDeviceSymbolicLink)
     {
-        throw std::logic_error{ "pActivate is null." };
+        throw std::logic_error{ "Device symbolic link is null." };
     }
 
     if (!GetIsMediaFoundationStarted())
@@ -512,15 +516,9 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
         throw std::logic_error{ "This instance of CSourceReader is already initialized for a device." };
     }
 
-    // Copy reference for the IMFActivate associated with the capture device
-    //  and AddRef to the COM object.
-    m_pDevice = pActivate;
-    pActivate->AddRef();
-
     HRESULT hr{ S_OK };
     std::string exWhatString{};
 
-    IMFMediaSource  *pMediaSource{ nullptr };
     IMFAttributes   *pAttributes{ nullptr };
     IMFMediaType    *pMediaType{ nullptr };
 
@@ -533,17 +531,23 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
 
     EnterCriticalSection(&m_criticalSection);
 
-    // Create the media source for the device
-    hr = m_pDevice->ActivateObject(IID_PPV_ARGS(&pMediaSource));
-    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFActivate::ActivateObject().");
+    // ---
+    // --- Create media source for the symbolic link
+    // ---
 
-    // Get the symbolic link
-    hr = m_pDevice->GetAllocatedString(
-        MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK,
-        &m_pwszSymbolicLink,
-        &m_cchSymbolicLink
-        );
-    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFActivate::GetAllocatedString().");
+    // Create attributes to pass to `MFCreateDeviceSource` with single slot
+    hr = MFCreateAttributes(&pAttributes, 1);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateAttributes().");
+
+    hr = pAttributes->SetString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, pwszDeviceSymbolicLink);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFAttributes::SetString().");
+
+    // Create the media source for the device
+    hr = MFCreateDeviceSource(pAttributes, &m_pMediaSource);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateDeviceSource().");
+
+    // Release the attributes for the next use
+    SafeRelease(&pAttributes);
 
     // ---
     // --- Create the source reader
@@ -565,7 +569,7 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
 
     // Create source reader for the media source using the attributes
     hr = MFCreateSourceReaderFromMediaSource(
-        pMediaSource,
+        m_pMediaSource,
         pAttributes,
         &m_pSourceReader
         );
@@ -665,19 +669,19 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
         goto done;
     }
 
+    // Save the symbolic link
+    m_wstrDeviceSymbolicLink = std::wstring{ pwszDeviceSymbolicLink };
+
     // Set the capture device change notification handler
-    AddCaptureDeviceChangeNotificationHandler(m_pwszSymbolicLink, &m_pDeviceChangeNotifHandler);
+    AddCaptureDeviceChangeNotificationHandler(m_wstrDeviceSymbolicLink, &m_pDeviceChangeNotifHandler);
 
     m_bIsInitialized = true;
     m_bIsAvailable = true;
 
 done:
-    if (FAILED(hr) && pMediaSource) { pMediaSource->Shutdown(); }
-
     CoTaskMemFree(pMFTCLSIDs);
     SafeRelease(&pMediaType);
     SafeRelease(&pAttributes);
-    SafeRelease(&pMediaSource);
     if (FAILED(hr)) { FreeResources(); }
 
     LeaveCriticalSection(&m_criticalSection);
