@@ -155,7 +155,7 @@ namespace LeanCameraCapture
             bool                    m_bIsAvailable;         // True after the first initialization
                                                             //  and is set to false in case of error or device loss.
 
-            IMFActivate             *m_pDevice;             // Reference for the used capture device
+            IMFMediaSource          *m_pMediaSource;        // Reference for the used capture device
             IMFSourceReader         *m_pSourceReader;       // Reader for samples from the capture device
             IMFTransform            *m_pProcessor;          // Processing the input type into RGB32 output type
 
@@ -166,8 +166,8 @@ namespace LeanCameraCapture
 
             std::unique_ptr<BYTE[]> m_frameBuffer;
 
-            WCHAR                   *m_pwszSymbolicLink;
-            UINT32                  m_cchSymbolicLink;
+            // Here we store the symbolic link of the device we are using.
+            std::wstring                m_wstrDeviceSymbolicLink;
 
             READ_SAMPLE_SUCCESS_HANDLER m_pReadSampleSuccessCallback;
             READ_SAMPLE_FAIL_HANDLER    m_pReadSampleFailCallback;

@@ -25,7 +25,7 @@
 static HDEVNOTIFY g_HDevNofity{ nullptr };
 
 // Map for the devices' symbolic link and handlers
-static std::multimap<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER*> g_mmapHandlers{};
+static std::multimap<const std::wstring &, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER*> g_mmapHandlers{};
 
 // The original WindowProc before subclassing
 static WNDPROC g_wndprocOriginal{ nullptr };
@@ -49,9 +49,8 @@ static void OnCaptureDeviceChangeNotification(PDEV_BROADCAST_HDR pHdr)
 
     for (const auto& item : g_mmapHandlers)
     {
-        if (!item.first) { continue; }
         if (!item.second) { continue; }
-        if (_wcsicmp(item.first, pDi->dbcc_name) != 0) { continue; }
+        if (_wcsicmp(item.first.c_str(), pDi->dbcc_name) != 0) { continue; }
 
         // Call the handler
         (*(item.second))();
@@ -163,7 +162,7 @@ void UnregisterRegisteredCaptureDeviceChangeNotification(HWND hwnd) noexcept(fal
 // --------------------------------------------------------------------
 
 void AddCaptureDeviceChangeNotificationHandler(
-    const WCHAR *pwszDeviceSymbolicLink,
+    const std::wstring &deviceSymbolicLink,
     CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER *ppCallback
     )
 {
@@ -171,10 +170,10 @@ void AddCaptureDeviceChangeNotificationHandler(
     auto entryFindIterator = std::find_if(
         g_mmapHandlers.begin(),
         g_mmapHandlers.end(),
-        [&pwszDeviceSymbolicLink, &ppCallback](std::pair<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER*> item)
+        [&deviceSymbolicLink, &ppCallback](std::pair<const std::wstring &, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER*> item)
         {
             // We are comparing pointers
-            if (item.first != pwszDeviceSymbolicLink) { return false; }
+            if (item.first != deviceSymbolicLink) { return false; }
             if (item.second != ppCallback) { return false; }
 
             return true;
@@ -185,7 +184,7 @@ void AddCaptureDeviceChangeNotificationHandler(
     if (entryFindIterator != g_mmapHandlers.end()) { return; }
 
     // Insert the entry
-    g_mmapHandlers.insert({ pwszDeviceSymbolicLink, ppCallback });
+    g_mmapHandlers.insert({ deviceSymbolicLink, ppCallback });
 }
 
 // --------------------------------------------------------------------
@@ -193,17 +192,17 @@ void AddCaptureDeviceChangeNotificationHandler(
 // --------------------------------------------------------------------
 
 void RemoveCaptureDeviceChangeNotificationHandler(
-    const WCHAR *pwszDeviceSymbolicLink,
+    const std::wstring &deviceSymbolicLink,
     CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER *ppCallback
     )
 {
     auto entryFindIterator = std::find_if(
         g_mmapHandlers.begin(),
         g_mmapHandlers.end(),
-        [&pwszDeviceSymbolicLink, &ppCallback](std::pair<const WCHAR *, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER*> item)
+        [&deviceSymbolicLink, &ppCallback](std::pair<const std::wstring &, CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER *> item)
         {
             // We are comparing pointers
-            if (item.first != pwszDeviceSymbolicLink) { return false; }
+            if (item.first != deviceSymbolicLink) { return false; }
             if (item.second != ppCallback) { return false; }
 
             return true;

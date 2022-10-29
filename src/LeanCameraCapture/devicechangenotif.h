@@ -36,7 +36,7 @@ void UnregisterRegisteredCaptureDeviceChangeNotification(HWND hwnd) noexcept(fal
 /// [Internal][Native] Add a handler for a specific device capture change notification
 /// </summary>
 void AddCaptureDeviceChangeNotificationHandler(
-    const WCHAR *pwszDeviceSymbolicLink,
+    const std::wstring &deviceSymbolicLink,
     CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER *ppCallback
     );
 
@@ -44,7 +44,7 @@ void AddCaptureDeviceChangeNotificationHandler(
 /// [Internal][Native] Remove handler
 /// </summary>
 void RemoveCaptureDeviceChangeNotificationHandler(
-    const WCHAR *pwszDeviceSymbolicLink,
+    const std::wstring &deviceSymbolicLink,
     CAPTURE_DEVICE_CAHNGE_NOTIF_HANDLER *ppCallback
     );
 
