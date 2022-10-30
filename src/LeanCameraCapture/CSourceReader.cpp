@@ -119,12 +119,12 @@ HRESULT CSourceReader::OnReadSample(
             // Note that here we are multiplying with 4 as we are using RGB32 (4 byte) format
             hr = MFCopyImage(m_frameBuffer.get(), m_frameWidth, pbScanline0, lStride, m_frameWidth * OUTPUT_BYTES_PER_PIXEL, m_frameHeight);
             CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCopyImage().");
-
-            if (m_pReadSampleSuccessCallback)
-            {
-                m_pReadSampleSuccessCallback(m_frameBuffer.get(), m_frameWidth, m_frameHeight, OUTPUT_BYTES_PER_PIXEL);
-            }
         }
+    }
+
+    if (m_pReadSampleSuccessCallback)
+    {
+        m_pReadSampleSuccessCallback(m_frameBuffer.get(), m_frameWidth, m_frameHeight, OUTPUT_BYTES_PER_PIXEL);
     }
 
 done:
