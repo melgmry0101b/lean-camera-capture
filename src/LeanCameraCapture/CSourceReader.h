@@ -140,7 +140,8 @@ namespace LeanCameraCapture
             static void SetVideoProcessorOutputForInputMediaType(
                 IMFTransform *pProcessor,
                 IMFMediaType *pInputMediaType,
-                const GUID guidOutputVideoSubtype
+                const GUID guidOutputVideoSubtype,
+                _Outptr_ IMFMediaType *&pOutputMediaType
                 ) noexcept(false);
 
             /* === Data Members === */

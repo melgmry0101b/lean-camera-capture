@@ -15,6 +15,9 @@
 
 #include "CSourceReader.h"
 
+#define OUTPUT_VIDEO_SUBTYPE MFVideoFormat_RGB32
+#define OUTPUT_BYTES_PER_PIXEL 4
+
 #pragma managed(push, off)
 
 using namespace std::string_literals;
@@ -114,12 +117,12 @@ HRESULT CSourceReader::OnReadSample(
 
             // Copy the frame
             // Note that here we are multiplying with 4 as we are using RGB32 (4 byte) format
-            hr = MFCopyImage(m_frameBuffer.get(), m_frameWidth, pbScanline0, lStride, m_frameWidth * 4, m_frameHeight);
+            hr = MFCopyImage(m_frameBuffer.get(), m_frameWidth, pbScanline0, lStride, m_frameWidth * OUTPUT_BYTES_PER_PIXEL, m_frameHeight);
             CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCopyImage().");
 
             if (m_pReadSampleSuccessCallback)
             {
-                m_pReadSampleSuccessCallback(m_frameBuffer.get(), m_frameWidth, m_frameHeight, 4);
+                m_pReadSampleSuccessCallback(m_frameBuffer.get(), m_frameWidth, m_frameHeight, OUTPUT_BYTES_PER_PIXEL);
             }
         }
     }
@@ -522,14 +525,16 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
     std::string exWhatString{};
 
     IMFAttributes   *pAttributes{ nullptr };
-    IMFMediaType    *pMediaType{ nullptr };
+    IMFMediaType    *pSourceOutputMediaType{ nullptr };
+    IMFMediaType    *pProcessorOutputMediaType{ nullptr };
 
     CLSID *pMFTCLSIDs{ nullptr };
     UINT32 MFTCLSIDsCount{ 0 };
 
-    MFT_REGISTER_TYPE_INFO inputInfo{ 0 };
-    MFT_REGISTER_TYPE_INFO outputInfo{ 0 };
-    GUID outputSubtype{ GUID_NULL };
+    MFT_REGISTER_TYPE_INFO processorInputInfo{ 0 };
+    MFT_REGISTER_TYPE_INFO processorOutputInfo{ 0 };
+
+    GUID sourceOutputSubtype{ GUID_NULL };
 
     EnterCriticalSection(&m_criticalSection);
 
@@ -537,9 +542,12 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
     // --- Create media source for the symbolic link
     // ---
 
-    // Create attributes to pass to `MFCreateDeviceSource` with single slot
-    hr = MFCreateAttributes(&pAttributes, 1);
+    // Create attributes to pass to `MFCreateDeviceSource` with two slots
+    hr = MFCreateAttributes(&pAttributes, 2);
     CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateAttributes().");
+
+    hr = pAttributes->SetGUID(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE, MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_GUID);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFAttributes::SetGUID().");
 
     hr = pAttributes->SetString(MF_DEVSOURCE_ATTRIBUTE_SOURCE_TYPE_VIDCAP_SYMBOLIC_LINK, pwszDeviceSymbolicLink);
     CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFAttributes::SetString().");
@@ -588,10 +596,10 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
     // --- Find the suitable codec for the video to RGB32
     // ---
 
-    inputInfo.guidMajorType = MFMediaType_Video;
+    processorInputInfo.guidMajorType = MFMediaType_Video;
     
-    outputInfo.guidMajorType = MFMediaType_Video;
-    outputInfo.guidSubtype = MFVideoFormat_RGB32; // Our output type is RGB32
+    processorOutputInfo.guidMajorType = MFMediaType_Video;
+    processorOutputInfo.guidSubtype = OUTPUT_VIDEO_SUBTYPE; // Our output type is RGB32
 
     // Loop through the available output types in the source reader and check
     for (DWORD i = 0; ; i++)
@@ -599,22 +607,22 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
         hr = m_pSourceReader->GetNativeMediaType(
             static_cast<DWORD>(MF_SOURCE_READER_FIRST_VIDEO_STREAM),
             i,
-            &pMediaType
+            &pSourceOutputMediaType
             );
         CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Could not find suitable codec converting into RGB32. IMFSourceReader::GetNativeMediaType().");
 
-        hr = pMediaType->GetGUID(MF_MT_SUBTYPE, &outputSubtype);
+        hr = pSourceOutputMediaType->GetGUID(MF_MT_SUBTYPE, &sourceOutputSubtype);
         CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFMediaType::GetGUID().");
 
-        inputInfo.guidSubtype = outputSubtype;
+        processorInputInfo.guidSubtype = sourceOutputSubtype;
 
         _RPTFW2(_CRT_WARN, L"Checking transformer for media type '%d' on '%s'.\n", i, pwszDeviceSymbolicLink);
 
         hr = MFTEnum(
             MFT_CATEGORY_VIDEO_PROCESSOR, // Process from input to output type
             0,              // Reserved
-            &inputInfo,     // Input type
-            &outputInfo,    // Output type
+            &processorInputInfo,     // Input type
+            &processorOutputInfo,    // Output type
             nullptr,        // Reserved
             &pMFTCLSIDs,
             &MFTCLSIDsCount
@@ -629,7 +637,7 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
         }
 
         // Free for the next iteration, in case of jump to `done`, a free will be performed there too
-        SafeRelease(&pMediaType);
+        SafeRelease(&pSourceOutputMediaType);
     }
 
     if (MFTCLSIDsCount == 0)
@@ -647,7 +655,7 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
     // Set the media type for the processor
     try
     {
-        SetVideoProcessorOutputForInputMediaType(m_pProcessor, pMediaType, MFVideoFormat_RGB32);
+        SetVideoProcessorOutputForInputMediaType(m_pProcessor, pSourceOutputMediaType, OUTPUT_VIDEO_SUBTYPE, /*OUT*/ pProcessorOutputMediaType);
     }
     catch (const std::system_error &ex)
     {
@@ -664,9 +672,9 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
     // Get the DefaultStride, Width, Height for the frames
     try
     {
-        GetWidthHeightDefaultStrideForMediaType(pMediaType, &m_lSrcDefaultStride, &m_frameWidth, &m_frameHeight);
+        GetWidthHeightDefaultStrideForMediaType(pProcessorOutputMediaType, &m_lSrcDefaultStride, &m_frameWidth, &m_frameHeight);
 
-        _RPTFW3(_CRT_WARN, L"Dimensions are w(%d) x h(%d) '%s'.\n", m_frameWidth, m_frameHeight, pwszDeviceSymbolicLink);
+        _RPTFW4(_CRT_WARN, L"Dimensions are w(%d) x h(%d) with stride(%d) on '%s'.\n", m_frameWidth, m_frameHeight, m_lSrcDefaultStride, pwszDeviceSymbolicLink);
     }
     catch (const std::system_error &ex)
     {
@@ -683,7 +691,7 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
     // Create the buffer for the frames
     try
     {
-        m_frameBuffer = std::make_unique<BYTE[]>(static_cast<size_t>(m_frameWidth) * static_cast<size_t>(m_frameHeight) * 4);
+        m_frameBuffer = std::make_unique<BYTE[]>(static_cast<size_t>(m_frameWidth) * static_cast<size_t>(m_frameHeight) * OUTPUT_BYTES_PER_PIXEL);
     }
     catch (const std::bad_alloc &/*ex*/)
     {
@@ -705,7 +713,8 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
 
 done:
     CoTaskMemFree(pMFTCLSIDs);
-    SafeRelease(&pMediaType);
+    SafeRelease(&pSourceOutputMediaType);
+    SafeRelease(&pProcessorOutputMediaType);
     SafeRelease(&pAttributes);
     if (FAILED(hr)) { FreeResources(); }
 
@@ -728,7 +737,8 @@ done:
 void CSourceReader::SetVideoProcessorOutputForInputMediaType(
     IMFTransform *pProcessor,
     IMFMediaType *pInputMediaType,
-    const GUID guidOutputVideoSubtype
+    const GUID guidOutputVideoSubtype,
+    _Outptr_ IMFMediaType *&pOutputMediaType
     )
 {
     assert(pProcessor != nullptr);
@@ -741,7 +751,17 @@ void CSourceReader::SetVideoProcessorOutputForInputMediaType(
     std::string exWhatString{ };
     GUID guidIndexVideoSubtype{ GUID_NULL };
 
-    IMFMediaType *pOutputMediaType{ nullptr };
+    IMFMediaType *pPartialProcessorOutputMediaType{ nullptr };
+    IMFMediaType *pCompleteProcessorOutputeMediaType{ nullptr };
+
+    // Storing data about the input type.
+    UINT32  inputInterlaceMode{ 0 };
+    LONG    inputDefaultStride{ 0 };
+    UINT32  inputWidth{ 0 };
+    UINT32  inputHeight{ 0 };
+    UINT    cbInputFrame{ 0 };
+    MFRatio inputFrameRate{};
+    MFRatio inputPar{};
 
     // Set the input type for the first stream
     hr = pProcessor->SetInputType(0, pInputMediaType, 0);
@@ -750,10 +770,10 @@ void CSourceReader::SetVideoProcessorOutputForInputMediaType(
     //Loop for the output type
     for (DWORD dwTypeIndex = 0; ; dwTypeIndex++)
     {
-        hr = pProcessor->GetOutputAvailableType(0, dwTypeIndex, &pOutputMediaType);
+        hr = pProcessor->GetOutputAvailableType(0, dwTypeIndex, &pPartialProcessorOutputMediaType);
         CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFTransform::GetOutputAvailableType().");
 
-        hr = pOutputMediaType->GetGUID(MF_MT_SUBTYPE, &guidIndexVideoSubtype);
+        hr = pPartialProcessorOutputMediaType->GetGUID(MF_MT_SUBTYPE, &guidIndexVideoSubtype);
         CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFMediaType::GetGUID().");
 
         _RPTF1(_CRT_WARN, "Check type matching to process input to output, output type no. '%d'.\n", dwTypeIndex);
@@ -765,23 +785,104 @@ void CSourceReader::SetVideoProcessorOutputForInputMediaType(
         }
 
         // Release for the next iteration
-        SafeRelease(&pOutputMediaType);
+        SafeRelease(&pPartialProcessorOutputMediaType);
     }
 
-    if (!pOutputMediaType)
+    if (!pPartialProcessorOutputMediaType)
     {
         hr = E_UNEXPECTED;
         CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "The input media type cannot be processed into a suitable output type.");
     }
 
-    _RPTF0(_CRT_WARN, "Setting output type for the processor.\n");
+    // Create complete media type from what usually would be a partial media type returned from the processor, this assumption is a HACK!
+    // HACK: Here we assume the `guidOutputVideoSubtype` is for an uncompressed media type e.g. RGB32.
+    //  as this method is private, this can sink in, but this note has to be written here.
+
+    // Ref: https://learn.microsoft.com/en-us/windows/win32/medfound/uncompressed-video-media-types
+
+    _RPTF0(_CRT_WARN, "Creating complete media type.\n");
+
+    // Step1: Get the details from the input.
+
+    hr = pInputMediaType->GetUINT32(MF_MT_INTERLACE_MODE, &inputInterlaceMode);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFMediaType::GetUINT32().");
+
+    try
+    {
+        GetWidthHeightDefaultStrideForMediaType(pInputMediaType, &inputDefaultStride, &inputWidth, &inputHeight);
+    }
+    catch (const std::system_error &ex)
+    {
+        hr = ex.code().value();
+        exWhatString = ex.what();
+        goto done;
+    }
+
+    hr = MFCalculateImageSize(guidOutputVideoSubtype, inputWidth, inputHeight, &cbInputFrame);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCalculateImageSize().");
+
+    hr = MFGetAttributeRatio(
+        pInputMediaType,
+        MF_MT_FRAME_RATE,
+        reinterpret_cast<UINT32 *>(&inputFrameRate.Numerator),
+        reinterpret_cast<UINT32 *>(&inputFrameRate.Denominator)
+    );
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFGetAttributeRatio().");
+
+    hr = MFGetAttributeRatio(
+        pInputMediaType,
+        MF_MT_PIXEL_ASPECT_RATIO,
+        reinterpret_cast<UINT32 *>(&inputPar.Numerator),
+        reinterpret_cast<UINT32 *>(&inputPar.Denominator)
+    );
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFGetAttributeRatio().");
+
+    // Step 2: Create the completed media for the output.
+
+    hr = MFCreateMediaType(&pCompleteProcessorOutputeMediaType);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateMediaType().");
+
+    hr = pCompleteProcessorOutputeMediaType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video); // HACK: We assume video.
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFMediaType::SetGUID().");
+
+    hr = pCompleteProcessorOutputeMediaType->SetGUID(MF_MT_SUBTYPE, guidOutputVideoSubtype);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFMediaType::SetGUID().");
+
+    hr = pCompleteProcessorOutputeMediaType->SetUINT32(MF_MT_INTERLACE_MODE, inputInterlaceMode);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFMediaType::SetUINT32().");
+
+    hr = pCompleteProcessorOutputeMediaType->SetUINT32(MF_MT_DEFAULT_STRIDE, inputDefaultStride);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFMediaType::SetUINT32().");
+
+    hr = MFSetAttributeSize(pCompleteProcessorOutputeMediaType, MF_MT_FRAME_SIZE, inputWidth, inputHeight);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFSetAttributeSize().");
+
+    hr = pCompleteProcessorOutputeMediaType->SetUINT32(MF_MT_SAMPLE_SIZE, cbInputFrame);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFMediaType::SetUINT32().");
+
+    hr = pCompleteProcessorOutputeMediaType->SetUINT32(MF_MT_FIXED_SIZE_SAMPLES, TRUE);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFMediaType::SetUINT32().");
+
+    hr = pCompleteProcessorOutputeMediaType->SetUINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFMediaType::SetUINT32().");
+
+    hr = MFSetAttributeRatio(pCompleteProcessorOutputeMediaType, MF_MT_FRAME_RATE, inputFrameRate.Numerator, inputFrameRate.Denominator);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFSetAttributeRatio().");
+
+    hr = MFSetAttributeRatio(pCompleteProcessorOutputeMediaType, MF_MT_PIXEL_ASPECT_RATIO, inputPar.Numerator, inputPar.Denominator);
+    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFSetAttributeRatio().");
 
     // Set the output type
-    hr = pProcessor->SetOutputType(0, pOutputMediaType, 0);
+    hr = pProcessor->SetOutputType(0, pCompleteProcessorOutputeMediaType, 0);
     CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFTransform::SetOutputType().");
 
+    // Set the output param
+    pOutputMediaType = pCompleteProcessorOutputeMediaType;
+    pOutputMediaType->AddRef();
+
 done:
-    SafeRelease(&pOutputMediaType);
+    SafeRelease(&pPartialProcessorOutputMediaType);
+    SafeRelease(&pCompleteProcessorOutputeMediaType);
 
     if (FAILED(hr))
     {
