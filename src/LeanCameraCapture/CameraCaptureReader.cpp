@@ -53,11 +53,11 @@ void CameraCaptureReader::Open()
 {
     System::Diagnostics::Debug::Assert(m_device != nullptr);
 
-    // Check if the reader is already open.
-    if (IsOpen) { return; }
-
     // Lock
     msclr::lock l{ m_lock };
+
+    // Check if the reader is already open.
+    if (IsOpen) { return; }
 
     // Create new CSourceReader
     auto newSourceReader = new Native::CSourceReader();
@@ -103,11 +103,11 @@ void CameraCaptureReader::Open()
 
 void CameraCaptureReader::Close()
 {
-    // Check if the reader is already closed
-    if (!IsOpen) { return; }
-
     // Lock
     msclr::lock l{ m_lock };
+
+    // Check if the reader is already closed
+    if (!IsOpen) { return; }
 
     // Release the native source reader
     // Copying pointer to a local variable avoiding
@@ -126,14 +126,14 @@ void CameraCaptureReader::Reopen()
 
 void CameraCaptureReader::ReadSample()
 {
+    // Lock
+    msclr::lock l{ m_lock };
+
     // Check if the reader is closed
     if (!IsOpen)
     {
         throw gcnew System::InvalidOperationException("Cannot issue a read sample on a closed reader.");
     }
-
-    // Lock
-    msclr::lock l{ m_lock };
 
     try
     {
