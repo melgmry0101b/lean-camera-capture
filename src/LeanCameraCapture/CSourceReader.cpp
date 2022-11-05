@@ -241,6 +241,8 @@ void CSourceReader::ProcessorProcessOutput(
     bool bDrain = false
     )
 {
+    assert(m_pProcessor != nullptr);
+
     HRESULT hr{ S_OK };
     std::string exWhatString{ };
 
@@ -307,6 +309,7 @@ void CSourceReader::ProcessorProcessSample(
     IMFSample **ppOutputSample
 )
 {
+    assert(m_pProcessor != nullptr);
     assert(pInputSample != nullptr);
     assert(ppOutputSample != nullptr);
 
