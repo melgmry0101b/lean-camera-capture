@@ -115,7 +115,8 @@ namespace LeanCameraCapture
 
             void ProcessorProcessOutput(
                 DWORD dwOutputStreamID,
-                IMFSample **ppOutputSample
+                IMFSample **ppOutputSample,
+                bool bDrain = false
                 ) noexcept(false);
 
             void ProcessorProcessSample(

@@ -237,7 +237,8 @@ void CSourceReader::CaptureDeviceChangeNotificationHandler()
 
 void CSourceReader::ProcessorProcessOutput(
     DWORD dwOutputStreamID,
-    IMFSample **ppOutputSample
+    IMFSample **ppOutputSample,
+    bool bDrain = false
     )
 {
     HRESULT hr{ S_OK };
