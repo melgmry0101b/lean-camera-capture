@@ -283,14 +283,11 @@ void CSourceReader::ProcessorProcessOutput(
         && ((outputDataBuffer.dwStatus & MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE) != MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE))
     {
         *ppOutputSample = pOutputSample;
-    }
-    else
-    {
-        // If the calling function isn't receiving the sample or the buffer isn't set, release it!
-        SafeRelease(&pOutputSample);
+        (*ppOutputSample)->AddRef();
     }
 
 done:
+    SafeRelease(&pOutputSample);
     SafeRelease(&pOutputBuffer);
 
     if (FAILED(hr))
@@ -340,11 +337,7 @@ void CSourceReader::ProcessorProcessSample(
     if (ppOutputSample)
     {
         *ppOutputSample = pOutputSample;
-    }
-    else
-    {
-        // If the calling method isn't accept the output, release the sample
-        SafeRelease(&pOutputSample);
+        (*ppOutputSample)->AddRef();
     }
 
 finalizeAndDrain:
@@ -414,6 +407,8 @@ finalizeAndDrain:
     }
 
 done:
+    SafeRelease(&pOutputSample);
+
     if (FAILED(hr))
     {
         throw std::system_error{ hr, std::system_category(), exWhatString };
