@@ -238,56 +238,90 @@ void CSourceReader::CaptureDeviceChangeNotificationHandler()
 void CSourceReader::ProcessorProcessOutput(
     DWORD dwOutputStreamID,
     IMFSample **ppOutputSample,
-    bool bDrain = false
+    bool bDrain
     )
 {
     assert(m_pProcessor != nullptr);
+    assert(!bDrain || ppOutputSample == nullptr); // You can't set ppOutputSample for drain.
 
     HRESULT hr{ S_OK };
     std::string exWhatString{ };
 
-    DWORD dwProcessOutputStatus{ 0 };
-    MFT_OUTPUT_STREAM_INFO outputStreamInfo{ 0 };
-    MFT_OUTPUT_DATA_BUFFER outputDataBuffer{ 0 };
-
     IMFMediaBuffer *pOutputBuffer{ nullptr };
     IMFSample *pOutputSample{ nullptr };
 
-    hr = m_pProcessor->GetOutputStreamInfo(dwOutputStreamID, &outputStreamInfo);
-    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFTransform::GetOutputStreamInfo().");
+    // NOTE: why did we use `bDrain`?
+    //      I don't encourage exceptions as a part of the normal control flow,
+    //  so, catching an exception for a normal `Drain` operation is not favorable.
+    //  This lead me to add a flag which if set the function just drains the processor.
+    //  I added this flag to the function instead of creating a new one because of the shared logic.
 
-    // Check if the sample should be allocated by us
-    if ((outputStreamInfo.dwFlags & (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES))
-        != (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES))
+    if (bDrain)
     {
-        // Create buffer
-        hr = MFCreateAlignedMemoryBuffer(outputStreamInfo.cbSize, outputStreamInfo.cbAlignment, &pOutputBuffer);
-        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateAlignedMemoryBuffer().");
+        hr = m_pProcessor->ProcessMessage(MFT_MESSAGE_NOTIFY_END_OF_STREAM, 0);
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFTransform::ProcessMessage().");
 
-        // Create the output sample
-        hr = MFCreateSample(&pOutputSample);
-        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateSample().");
-
-        // Add buffer to the sample
-        hr = pOutputSample->AddBuffer(pOutputBuffer);
-        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFSample::AddBuffer().");
+        hr = m_pProcessor->ProcessMessage(MFT_MESSAGE_COMMAND_DRAIN, 0);
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFTransform::ProcessMessage().");
     }
 
-    // Get the output
-    outputDataBuffer.dwStreamID = dwOutputStreamID;
-    outputDataBuffer.pSample = pOutputSample;
-    outputDataBuffer.dwStatus = 0;
-    outputDataBuffer.pEvents = nullptr;
-    hr = m_pProcessor->ProcessOutput(0, 1, &outputDataBuffer, &dwProcessOutputStatus);
-    CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFTransfer::ProcessOutput().");
+    do {
+        DWORD dwProcessOutputStatus{ 0 };
+        MFT_OUTPUT_STREAM_INFO outputStreamInfo{ 0 };
+        MFT_OUTPUT_DATA_BUFFER outputDataBuffer{ 0 };
 
-    // set the output pointer if the caller is willing to receive the sample, and is available to begin with!
-    if (ppOutputSample
-        && ((outputDataBuffer.dwStatus & MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE) != MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE))
-    {
-        *ppOutputSample = pOutputSample;
-        (*ppOutputSample)->AddRef();
-    }
+        hr = m_pProcessor->GetOutputStreamInfo(dwOutputStreamID, &outputStreamInfo);
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFTransform::GetOutputStreamInfo().");
+
+        // Check if the sample should be allocated by us
+        if ((outputStreamInfo.dwFlags & (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES))
+            != (MFT_OUTPUT_STREAM_PROVIDES_SAMPLES | MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES))
+        {
+            // TODO: This part needs optimization, we should reuse previous buffers instead of creating a new buffer each time,
+            //  this is an overhead we should optimize, and handle cases where the processor can provide the sample for us.
+            // NOTE: As this library is intended for quick preview and take a still shot, this isn't particularly painful,
+            //  but this note is here for next iterations and versions -if so :)-
+
+            // Create buffer
+            hr = MFCreateAlignedMemoryBuffer(outputStreamInfo.cbSize, outputStreamInfo.cbAlignment, &pOutputBuffer);
+            CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateAlignedMemoryBuffer().");
+
+            // Create the output sample
+            hr = MFCreateSample(&pOutputSample);
+            CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateSample().");
+
+            // Add buffer to the sample
+            hr = pOutputSample->AddBuffer(pOutputBuffer);
+            CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFSample::AddBuffer().");
+        }
+
+        // Get the output
+        outputDataBuffer.dwStreamID = dwOutputStreamID;
+        outputDataBuffer.pSample = pOutputSample;
+        outputDataBuffer.dwStatus = 0;
+        outputDataBuffer.pEvents = nullptr;
+        hr = m_pProcessor->ProcessOutput(0, 1, &outputDataBuffer, &dwProcessOutputStatus);
+        CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFTransfer::ProcessOutput().");
+
+        // set the output pointer if the caller is willing to receive the sample, and is available to begin with!
+        // Note that we assert on if bDrain is true, ppOutputSample has to be nullptr
+        if (ppOutputSample
+            && ((outputDataBuffer.dwStatus & MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE) != MFT_OUTPUT_DATA_BUFFER_NO_SAMPLE))
+        {
+            *ppOutputSample = pOutputSample;
+            (*ppOutputSample)->AddRef();
+
+            // Here we break out of the loop as ppOutputSample won't be set in case of a drain process,
+            //  so we break out otherwise to not release it twice.
+            break;
+        }
+
+        // Release for next iteration in case of drain
+        SafeRelease(&pOutputSample);
+        SafeRelease(&pOutputBuffer);
+    } while (bDrain); // If we are in drain mode, loop till we get exception with `MF_E_TRANSFORM_NEED_MORE_INPUT` or others.
+
+
 
 done:
     SafeRelease(&pOutputSample);
@@ -295,6 +329,8 @@ done:
 
     if (FAILED(hr))
     {
+        if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT && bDrain) { return; }
+
         throw std::system_error{ hr, std::system_category(), exWhatString };
     }
 }
@@ -345,69 +381,26 @@ void CSourceReader::ProcessorProcessSample(
     }
 
 finalizeAndDrain:
-    hr = m_pProcessor->ProcessMessage(MFT_MESSAGE_NOTIFY_END_OF_STREAM, 0);
-    if (FAILED(hr))
+    try
     {
+        ProcessorProcessOutput(dwStreamID, nullptr, true);
+    }
+    catch (const std::system_error &ex)
+    {
+        hr = ex.code().value();
         if (exWhatString.empty())
         {
-            exWhatString = MAKE_EX_STR("Error occurred during IMFTransform::ProcessMessage().");
+            exWhatString = std::string{ MAKE_EX_STR("Error occurred while draining processor.") }
+                + "\nWith Error: " + ex.what() + " (" + std::to_string(ex.code().value()) + ")";
         }
         else
         {
-            exWhatString = std::string{ MAKE_EX_STR("Error occurred during IMFTransform::ProcessMessage().") }
+            exWhatString = std::string{ MAKE_EX_STR("Error occurred while draining processor.") }
+                + "\nWith Error: " + ex.what() + " (" + std::to_string(ex.code().value()) + ")"
                 + "\nWith Error: " + exWhatString;
         }
 
         goto done;
-    }
-
-    hr = m_pProcessor->ProcessMessage(MFT_MESSAGE_COMMAND_DRAIN, 0);
-    if (FAILED(hr))
-    {
-        if (exWhatString.empty())
-        {
-            exWhatString = MAKE_EX_STR("Error occurred during IMFTransform::ProcessMessage().");
-        }
-        else
-        {
-            exWhatString = std::string{ MAKE_EX_STR("Error occurred during IMFTransform::ProcessMessage().") }
-            + "\nWith Error: " + exWhatString;
-        }
-
-        goto done;
-    }
-
-    hr = S_OK;
-    while (true)
-    {
-        try
-        {
-            ProcessorProcessOutput(dwStreamID, nullptr);
-        }
-        catch (const std::system_error &ex)
-        {
-            hr = ex.code().value();
-            if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
-            {
-                // Draining the MFT succeeded
-                hr = S_OK;
-            }
-            else
-            {
-                if (exWhatString.empty())
-                {
-                    exWhatString = std::string{ MAKE_EX_STR("Error occurred while draining processor.") }
-                        + "\nWith Error: " + ex.what() + " (" + std::to_string(ex.code().value()) + ")";
-                }
-                else
-                {
-                    exWhatString = std::string{ MAKE_EX_STR("Error occurred while draining processor.") }
-                        + "\nWith Error: " + ex.what() + " (" + std::to_string(ex.code().value()) + ")"
-                        + "\nWith Error: " + exWhatString;
-                }
-            }
-            goto done;
-        }
     }
 
 done:
