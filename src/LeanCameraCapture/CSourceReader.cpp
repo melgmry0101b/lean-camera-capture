@@ -730,7 +730,7 @@ void CSourceReader::SetVideoProcessorOutputForInputMediaType(
     IMFTransform *pProcessor,
     IMFMediaType *pInputMediaType,
     const GUID guidOutputVideoSubtype,
-    _Outptr_ IMFMediaType *&pOutputMediaType
+    IMFMediaType *&pOutputMediaType
     )
 {
     assert(pProcessor != nullptr);

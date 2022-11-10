@@ -142,7 +142,7 @@ namespace LeanCameraCapture
                 IMFTransform *pProcessor,
                 IMFMediaType *pInputMediaType,
                 const GUID guidOutputVideoSubtype,
-                _Outptr_ IMFMediaType *&pOutputMediaType
+                IMFMediaType *&pOutputMediaType
                 ) noexcept(false);
 
             /* === Data Members === */
