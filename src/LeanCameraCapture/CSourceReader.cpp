@@ -87,6 +87,14 @@ HRESULT CSourceReader::OnReadSample(
 
     _RPT1(_CRT_WARN, "Entered critical section in %s.\n", STRINGIZE(OnReadSample));
 
+    // Check if the CSourceReader has been closed before entering the critical section.
+    if (!m_bIsAvailable)
+    {
+        LeaveCriticalSection(&m_criticalSection);
+        _RPT1(_CRT_WARN, "CSourceReader isn't available during '%s', left critical section and returning.\n", STRINGIZE(OnReadSample));
+        return hr;
+    }
+
     // Check if hr is failed
     CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error passed from IMFSourceReader.");
 
