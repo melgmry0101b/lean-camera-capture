@@ -110,9 +110,9 @@ namespace LeanCameraCapture
 
             ~CSourceReader();
 
-        private:
             void FreeResources();
 
+        private:
             void ProcessorProcessOutput(
                 DWORD dwOutputStreamID,
                 IMFSample **ppOutputSample,

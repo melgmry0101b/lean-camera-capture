@@ -81,7 +81,11 @@ HRESULT CSourceReader::OnReadSample(
     BYTE *pbScanline0{ nullptr };
     LONG lStride{ 0 };
 
+    _RPT1(_CRT_WARN, "Waiting to enter critical section from %s.\n", STRINGIZE(OnReadSample));
+
     EnterCriticalSection(&m_criticalSection);
+
+    _RPT1(_CRT_WARN, "Entered critical section in %s.\n", STRINGIZE(OnReadSample));
 
     // Check if hr is failed
     CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error passed from IMFSourceReader.");
@@ -141,6 +145,8 @@ done:
 
     LeaveCriticalSection(&m_criticalSection);
 
+    _RPT1(_CRT_WARN, "Left critical section in %s.\n", STRINGIZE(OnReadSample));
+
     return hr;
 }
 
@@ -183,6 +189,8 @@ CSourceReader::~CSourceReader()
     RemoveCaptureDeviceChangeNotificationHandler(m_wstrDeviceSymbolicLink, &m_pDeviceChangeNotifHandler);
 
     DeleteCriticalSection(&m_criticalSection);
+
+    _RPT0(_CRT_WARN, "CSourceReader destructor has been called.\n");
 }
 
 // ===============================
@@ -195,10 +203,11 @@ CSourceReader::~CSourceReader()
 
 void CSourceReader::FreeResources()
 {
+    _RPT1(_CRT_WARN, "Waiting to enter critical section from %s.\n", STRINGIZE(FreeResources));
+
     EnterCriticalSection(&m_criticalSection);
 
-    SafeRelease(&m_pProcessor);
-    SafeRelease(&m_pSourceReader);
+    _RPT1(_CRT_WARN, "Entered critical section in %s.\n", STRINGIZE(FreeResources));
 
     // Shutdown the media source before releasing
     if (m_pMediaSource)
@@ -206,11 +215,16 @@ void CSourceReader::FreeResources()
         m_pMediaSource->Shutdown();
     }
 
+    SafeRelease(&m_pProcessor);
+    SafeRelease(&m_pSourceReader);
+
     SafeRelease(&m_pMediaSource);
 
     m_bIsAvailable = false;
 
     LeaveCriticalSection(&m_criticalSection);
+
+    _RPT1(_CRT_WARN, "Left critical section in %s.\n", STRINGIZE(FreeResources));
 }
 
 // --------------------------------------------------------------------
@@ -223,12 +237,18 @@ void CSourceReader::FreeResources()
 
 void CSourceReader::CaptureDeviceChangeNotificationHandler()
 {
+    _RPT1(_CRT_WARN, "Waiting to enter critical section from %s.\n", STRINGIZE(CaptureDeviceChangeNotificationHandler));
+
     EnterCriticalSection(&m_criticalSection);
+
+    _RPT1(_CRT_WARN, "Entered critical section in %s.\n", STRINGIZE(CaptureDeviceChangeNotificationHandler));
 
     // Set the reader as unavailable
     m_bIsAvailable = false;
 
     LeaveCriticalSection(&m_criticalSection);
+
+    _RPT1(_CRT_WARN, "Left critical section in %s.\n", STRINGIZE(CaptureDeviceChangeNotificationHandler));
 }
 
 // --------------------------------------------------------------------
@@ -440,7 +460,11 @@ void CSourceReader::SetReadFrameFailCallback(READ_SAMPLE_FAIL_HANDLER pCallback)
 
 void CSourceReader::ReadFrame()
 {
+    _RPT1(_CRT_WARN, "Waiting to enter critical section from %s.\n", STRINGIZE(ReadFrame));
+
     EnterCriticalSection(&m_criticalSection);
+
+    _RPT1(_CRT_WARN, "Entered critical section in %s.\n", STRINGIZE(ReadFrame));
 
     if (!m_bIsInitialized)
     {
@@ -478,6 +502,8 @@ void CSourceReader::ReadFrame()
             );
 
     LeaveCriticalSection(&m_criticalSection);
+
+    _RPT1(_CRT_WARN, "Left critical section in %s.\n", STRINGIZE(ReadFrame));
 
     if (FAILED(hr))
     {
@@ -528,7 +554,11 @@ void CSourceReader::InitializeForDevice(WCHAR *pwszDeviceSymbolicLink) noexcept(
 
     GUID sourceOutputSubtype{ GUID_NULL };
 
+    _RPTF1(_CRT_WARN, "Waiting to enter critical section from %s.\n", STRINGIZE(InitializeForDevice));
+
     EnterCriticalSection(&m_criticalSection);
+
+    _RPTF1(_CRT_WARN, "Entered critical section in %s.\n", STRINGIZE(InitializeForDevice));
 
     // ---
     // --- Create media source for the symbolic link
@@ -711,6 +741,8 @@ done:
     if (FAILED(hr)) { FreeResources(); }
 
     LeaveCriticalSection(&m_criticalSection);
+
+    _RPTF1(_CRT_WARN, "Left critical section in %s.\n", STRINGIZE(InitializeForDevice));
 
     if (FAILED(hr))
     {
