@@ -104,15 +104,17 @@ namespace LeanCameraCapture
             bool GetIsInitialized() const { return m_bIsInitialized; }
             bool GetIsAvailable() const { return m_bIsAvailable; }
 
+            void Close() { FreeResources(); }
+
             // ---
             // --- Destructor
             // ---
 
             ~CSourceReader();
 
+        private:
             void FreeResources();
 
-        private:
             void ProcessorProcessOutput(
                 DWORD dwOutputStreamID,
                 IMFSample **ppOutputSample,

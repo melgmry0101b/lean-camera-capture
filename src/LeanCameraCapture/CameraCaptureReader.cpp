@@ -112,12 +112,13 @@ void CameraCaptureReader::Close()
     m_pCSourceReader->SetReadFrameSuccessCallback(nullptr);
     m_pCSourceReader->SetReadFrameFailCallback(nullptr);
     
+    m_pCSourceReader->Close();
+
     // Release the native source reader
     // Copying pointer to a local variable avoiding
     //  Error C2784 "could not deduce template argument for 'T **' from 'cli::interior_ptr<CSourceReader *>'"
     // btw, decided not to hop around pin_ptr for this.
     Native::CSourceReader *pCSourceReader{ m_pCSourceReader };
-    pCSourceReader->FreeResources();
     SafeRelease(&pCSourceReader);
     m_pCSourceReader = nullptr;
 }
@@ -228,14 +229,14 @@ CameraCaptureReader::~CameraCaptureReader()
 CameraCaptureReader::!CameraCaptureReader()
 {
     // Release unmanaged resources.
-
-    // Copying pointer to a local variable avoiding
-    //  Error C2784 "could not deduce template argument for 'T **' from 'cli::interior_ptr<CSourceReader *>'"
-    // btw, decided not to hop around pin_ptr for this.
     if (m_pCSourceReader)
     {
+        m_pCSourceReader->Close();
+
+        // Copying pointer to a local variable avoiding
+        //  Error C2784 "could not deduce template argument for 'T **' from 'cli::interior_ptr<CSourceReader *>'"
+        // btw, decided not to hop around pin_ptr for this.
         Native::CSourceReader *pCSourceReader{ m_pCSourceReader };
-        pCSourceReader->FreeResources();
         SafeRelease(&pCSourceReader);
         m_pCSourceReader = nullptr;
     }
