@@ -115,7 +115,9 @@ namespace LeanCameraCapture
     private:
         CameraCaptureDevice     ^m_device;  // Reference to the device used for the reader.
 
-        System::Object          ^m_lock; // Lock object for synchronization.
+        System::Object          ^m_lock;    // Lock object for synchronization.
+
+        array<System::Byte>     ^m_buffer;  // Here we store buffer to avoid multiple invocations of GC.
 
         // On opening the managed reader, a new native reader is allocated and initialized,
         //  and on close, the native reader is released.

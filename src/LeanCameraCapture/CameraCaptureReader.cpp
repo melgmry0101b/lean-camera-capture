@@ -37,6 +37,8 @@ CameraCaptureReader::CameraCaptureReader(CameraCaptureDevice ^device) :
 
     m_device = device;
 
+    m_buffer = nullptr;
+
     m_lock = gcnew System::Object();
 
     m_CSourceReaderReadFrameSuccessHandler
@@ -183,11 +185,15 @@ void CameraCaptureReader::ReadFrameSuccessNativeHandler(
     msclr::lock l{ m_lock };
 
     auto bufferLen = widthInPixels * heightInPixels * bytesPerPixel;
-    auto managedBuffer = gcnew array<System::Byte>(bufferLen);
-    Marshal::Copy(System::IntPtr(const_cast<void *>(static_cast<const void *>(pbBuffer))), managedBuffer, 0, bufferLen);
+    if (!m_buffer || m_buffer->Length < static_cast<INT32>(bufferLen))
+    {
+        m_buffer = gcnew array<System::Byte>(bufferLen);
+    }
+
+    Marshal::Copy(System::IntPtr(const_cast<void *>(static_cast<const void *>(pbBuffer))), m_buffer, 0, bufferLen);
 
     OnReadSampleSucceeded(this, gcnew ReadSampleSucceededEventArgs(
-        managedBuffer, widthInPixels, heightInPixels, bytesPerPixel
+        m_buffer, widthInPixels, heightInPixels, bytesPerPixel
     ));
 }
 

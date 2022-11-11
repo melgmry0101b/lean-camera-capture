@@ -15,6 +15,8 @@
 
 #include "leancamercapture.h"
 
+using namespace System::Collections::Generic;
+
 namespace LeanCameraCapture
 {
     /// <summary>
@@ -44,7 +46,7 @@ namespace LeanCameraCapture
         /// <summary>
         /// Get sample's buffer.
         /// </summary>
-        array<System::Byte> ^GetBuffer()
+        IReadOnlyCollection<System::Byte> ^GetBuffer()
         {
             // Refer to https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca1819
             //  for why to not use a property that returns arrays.
@@ -52,7 +54,7 @@ namespace LeanCameraCapture
             //  on each call which has a performance penalty. This is one of the reasons.
 
             // Here we return a copy of the array.
-            return safe_cast<array<System::Byte> ^>(m_buffer->Clone());
+            return System::Array::AsReadOnly(m_buffer);
         }
 
         /* === Properties === */
