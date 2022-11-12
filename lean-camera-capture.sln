@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.30114.105
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LeanCameraCapture", "src\LeanCameraCapture\LeanCameraCapture.vcxproj", "{69B168FF-CE7C-4B88-AB4A-7625635AEEDE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LeanCameraCapture.Demos.WinForms", "demos\LeanCameraCapture.Demos.WinForms\LeanCameraCapture.Demos.WinForms.csproj", "{74CA3C4D-7D5E-4D1D-8F44-0DDB1EE4BAD0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{69B168FF-CE7C-4B88-AB4A-7625635AEEDE}.Release|x64.Build.0 = Release|x64
 		{69B168FF-CE7C-4B88-AB4A-7625635AEEDE}.Release|x86.ActiveCfg = Release|Win32
 		{69B168FF-CE7C-4B88-AB4A-7625635AEEDE}.Release|x86.Build.0 = Release|Win32
+		{74CA3C4D-7D5E-4D1D-8F44-0DDB1EE4BAD0}.Debug|x64.ActiveCfg = Debug|x64
+		{74CA3C4D-7D5E-4D1D-8F44-0DDB1EE4BAD0}.Debug|x64.Build.0 = Debug|x64
+		{74CA3C4D-7D5E-4D1D-8F44-0DDB1EE4BAD0}.Debug|x86.ActiveCfg = Debug|x86
+		{74CA3C4D-7D5E-4D1D-8F44-0DDB1EE4BAD0}.Debug|x86.Build.0 = Debug|x86
+		{74CA3C4D-7D5E-4D1D-8F44-0DDB1EE4BAD0}.Release|x64.ActiveCfg = Release|x64
+		{74CA3C4D-7D5E-4D1D-8F44-0DDB1EE4BAD0}.Release|x64.Build.0 = Release|x64
+		{74CA3C4D-7D5E-4D1D-8F44-0DDB1EE4BAD0}.Release|x86.ActiveCfg = Release|x86
+		{74CA3C4D-7D5E-4D1D-8F44-0DDB1EE4BAD0}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

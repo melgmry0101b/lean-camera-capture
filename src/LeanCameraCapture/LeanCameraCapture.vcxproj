@@ -24,34 +24,34 @@
     <Keyword>NetCoreCProj</Keyword>
     <RootNamespace>LeanCameraCapture</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CLRSupport>NetCore</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CLRSupport>NetCore</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CLRSupport>NetCore</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CLRSupport>NetCore</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -73,18 +73,32 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ManagedAssembly>true</ManagedAssembly>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ManagedAssembly>true</ManagedAssembly>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ManagedAssembly>true</ManagedAssembly>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ManagedAssembly>true</ManagedAssembly>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);__SOURCE_FILENAME__="%(Filename)%(Extension)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <UseFullPaths>true</UseFullPaths>
+      <OmitDefaultLibName>false</OmitDefaultLibName>
     </ClCompile>
     <Link>
-      <AdditionalDependencies />
+      <AdditionalDependencies>mfplat.lib;mf.lib;mfreadwrite.lib;mfuuid.lib;d3d9.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;$(BinaryVersionPreprocessorDefinitions);$(VersionPreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -97,13 +111,15 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_DEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);$(VersionInfoPreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <PreprocessorDefinitions>_DEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);$(VersionInfoPreprocessorDefinitions);__SOURCE_FILENAME__="%(Filename)%(Extension)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <UseFullPaths>true</UseFullPaths>
+      <OmitDefaultLibName>false</OmitDefaultLibName>
     </ClCompile>
     <Link>
-      <AdditionalDependencies />
+      <AdditionalDependencies>mfplat.lib;mf.lib;mfreadwrite.lib;mfuuid.lib;d3d9.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;$(BinaryVersionPreprocessorDefinitions);$(VersionPreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -114,13 +130,15 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);$(VersionInfoPreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);$(VersionInfoPreprocessorDefinitions);__SOURCE_FILENAME__="%(Filename)%(Extension)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <UseFullPaths>true</UseFullPaths>
+      <OmitDefaultLibName>false</OmitDefaultLibName>
     </ClCompile>
     <Link>
-      <AdditionalDependencies />
+      <AdditionalDependencies>mfplat.lib;mf.lib;mfreadwrite.lib;mfuuid.lib;d3d9.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile />
     <ResourceCompile>
@@ -132,24 +150,47 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);$(VersionInfoPreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <LanguageStandard>stdcpp14</LanguageStandard>
+      <PreprocessorDefinitions>NDEBUG;_APP_ROOT_NAME="$(ProjectRootName)";_APP_TESTS_PROJECT="$(ProjectRootName).Tests";$(ProductPreprocessorDefinitions);$(VersionPreprocessorDefinitions);$(VersionInfoPreprocessorDefinitions);__SOURCE_FILENAME__="%(Filename)%(Extension)";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <LanguageStandard>stdcpp17</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
       <TreatWarningAsError>true</TreatWarningAsError>
+      <UseFullPaths>true</UseFullPaths>
+      <OmitDefaultLibName>false</OmitDefaultLibName>
     </ClCompile>
     <Link>
-      <AdditionalDependencies />
+      <AdditionalDependencies>mfplat.lib;mf.lib;mfreadwrite.lib;mfuuid.lib;d3d9.lib;shlwapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <PreprocessorDefinitions>$(BinaryVersionPreprocessorDefinitions);$(VersionPreprocessorDefinitions);%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="CameraCaptureDevice.h" />
+    <ClInclude Include="CameraCaptureErrorCodes.hpp" />
+    <ClInclude Include="CameraCaptureException.hpp" />
+    <ClInclude Include="CameraCaptureManager.h" />
+    <ClInclude Include="CameraCaptureReader.h" />
+    <ClInclude Include="CBufferLock.hpp" />
+    <ClInclude Include="CSourceReader.h" />
+    <ClInclude Include="devicechangenotif.h" />
+    <ClInclude Include="errcodes.h" />
+    <ClInclude Include="leancamercapture.h" />
     <ClInclude Include="macros.h" />
+    <ClInclude Include="ReadSampleFailedEventArgs.hpp" />
+    <ClInclude Include="ReadSampleSucceededEventArgs.hpp" />
+    <ClInclude Include="resource_macros.h" />
+    <ClInclude Include="mfmethods.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="saferelease.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
+    <ClCompile Include="CameraCaptureDevice.cpp" />
+    <ClCompile Include="CameraCaptureManager.cpp" />
+    <ClCompile Include="CameraCaptureReader.cpp" />
+    <ClCompile Include="CSourceReader.cpp" />
+    <ClCompile Include="devicechangenotif.cpp" />
+    <ClCompile Include="mfmethods.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="version.rc" />

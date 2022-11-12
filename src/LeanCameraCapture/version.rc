@@ -8,7 +8,7 @@
 // Generated from the TEXTINCLUDE 2 resource.
 //
 #include "winres.h"
-#include "macros.h"
+#include "resource_macros.h"
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
@@ -33,7 +33,7 @@ END
 2 TEXTINCLUDE 
 BEGIN
     "#include ""winres.h""\r\n"
-    "#include ""macros.h""\0"
+    "#include ""resource_macros.h""\0"
 END
 
 3 TEXTINCLUDE 
@@ -71,7 +71,7 @@ BEGIN
             VALUE "FileDescription", "Lean Camera Capture core library"
             VALUE "FileVersion", STRINGIZE_EXPRESSION(_APP_VER_FILE_VERSION)
             VALUE "InternalName", "LeanCameraCapture.dll"
-            VALUE "LegalCopyright", "(C) Mohammed Elghamry 2021"
+            VALUE "LegalCopyright", "(C) Mohammed Elghamry"
             VALUE "OriginalFilename", "LeanCameraCapture.dll"
             VALUE "ProductName", "Lean Camera Capture"
             VALUE "ProductVersion", STRINGIZE_EXPRESSION(_APP_VER_INFORMATIONAL_VERSION)
