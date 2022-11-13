@@ -46,7 +46,7 @@ namespace LeanCameraCapture
         /// <summary>
         /// Get sample's buffer.
         /// </summary>
-        IReadOnlyCollection<System::Byte> ^GetBuffer()
+        array<System::Byte> ^GetBuffer()
         {
             // Refer to https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/quality-rules/ca1819
             //  for why to not use a property that returns arrays.
@@ -54,7 +54,7 @@ namespace LeanCameraCapture
             //  on each call which has a performance penalty. This is one of the reasons.
 
             // Here we return a copy of the array.
-            return System::Array::AsReadOnly(m_buffer);
+            return m_buffer;
         }
 
         /* === Properties === */
