@@ -127,6 +127,9 @@ HRESULT CSourceReader::OnReadSample(
             hr = buffer.LockBuffer(m_lSrcDefaultStride, m_frameHeight, &pbScanline0, &lStride);
             CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during locking buffer.");
 
+            // HACK: We should've probably checked for the width and the height of the sample, but as we don't change
+            //  the processor's output media type, we have a guarantee about the width and height, and thus the buffer's size.
+
             // Copy the frame
             // Note that here we are multiplying with 4 as we are using RGB32 (4 byte) format
             hr = MFCopyImage(m_frameBuffer.get(), m_frameWidth, pbScanline0, lStride, m_frameWidth * OUTPUT_BYTES_PER_PIXEL, m_frameHeight);
