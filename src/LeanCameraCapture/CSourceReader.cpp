@@ -173,6 +173,8 @@ CSourceReader::CSourceReader() :
     m_lSrcDefaultStride{ 0 },
     m_frameWidth{ 0 },
     m_frameHeight{ 0 },
+    m_processorOutputBuffer{ nullptr },
+    m_processorOutputInfo{ 0 },
     m_frameBuffer{ nullptr },
     m_wstrDeviceSymbolicLink{},
     m_pReadSampleSuccessCallback{ nullptr },
@@ -228,6 +230,8 @@ void CSourceReader::FreeResources()
 
     SafeRelease(&m_pMediaSource);
 
+    SafeRelease(&m_processorOutputBuffer);
+
     m_bIsAvailable = false;
 
     LeaveCriticalSection(&m_criticalSection);
@@ -275,7 +279,6 @@ void CSourceReader::ProcessorProcessOutput(
     HRESULT hr{ S_OK };
     std::string exWhatString{ };
 
-    IMFMediaBuffer *pOutputBuffer{ nullptr };
     IMFSample *pOutputSample{ nullptr };
 
     // NOTE: why did we use `bDrain`?
@@ -310,16 +313,30 @@ void CSourceReader::ProcessorProcessOutput(
             // NOTE: As this library is intended for quick preview and take a still shot, this isn't particularly painful,
             //  but this note is here for next iterations and versions -if so :)-
 
-            // Create buffer
-            hr = MFCreateAlignedMemoryBuffer(outputStreamInfo.cbSize, outputStreamInfo.cbAlignment, &pOutputBuffer);
-            CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateAlignedMemoryBuffer().");
+            // Create buffer if we don't have one
+            if (!m_processorOutputBuffer
+                || m_processorOutputInfo.cbSize != outputStreamInfo.cbSize
+                || m_processorOutputInfo.cbAlignment != outputStreamInfo.cbAlignment)
+            {
+                _RPT0(_CRT_WARN, "Creating a new buffer for processor output.\n");
+
+                // Release old buffer
+                SafeRelease(&m_processorOutputBuffer);
+
+                // Create new buffer
+                hr = MFCreateAlignedMemoryBuffer(outputStreamInfo.cbSize, outputStreamInfo.cbAlignment, &m_processorOutputBuffer);
+                CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateAlignedMemoryBuffer().");
+
+                // Save buffer's details
+                m_processorOutputInfo = outputStreamInfo;
+            }
 
             // Create the output sample
             hr = MFCreateSample(&pOutputSample);
             CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during MFCreateSample().");
 
             // Add buffer to the sample
-            hr = pOutputSample->AddBuffer(pOutputBuffer);
+            hr = pOutputSample->AddBuffer(m_processorOutputBuffer);
             CHECK_FAILED_HR_WITH_GOTO_AND_EX_STR(hr, done, exWhatString, "Error occurred during IMFSample::AddBuffer().");
         }
 
@@ -346,14 +363,12 @@ void CSourceReader::ProcessorProcessOutput(
 
         // Release for next iteration in case of drain
         SafeRelease(&pOutputSample);
-        SafeRelease(&pOutputBuffer);
     } while (bDrain); // If we are in drain mode, loop till we get exception with `MF_E_TRANSFORM_NEED_MORE_INPUT` or others.
 
 
 
 done:
     SafeRelease(&pOutputSample);
-    SafeRelease(&pOutputBuffer);
 
     if (FAILED(hr))
     {

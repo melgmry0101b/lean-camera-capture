@@ -168,7 +168,12 @@ namespace LeanCameraCapture
             UINT32                  m_frameWidth;
             UINT32                  m_frameHeight;
 
-            std::unique_ptr<BYTE[]> m_frameBuffer;
+            // Here we store our output buffer and its properties for it to be reused rather than
+            //  doing repeated allocations and deallocations.
+            IMFMediaBuffer          *m_processorOutputBuffer;
+            MFT_OUTPUT_STREAM_INFO  m_processorOutputInfo;
+
+            std::unique_ptr<BYTE[]> m_frameBuffer;          // Here we store the final image data to be used by the consumer.
 
             // Here we store the symbolic link of the device we are using.
             std::wstring                m_wstrDeviceSymbolicLink;
