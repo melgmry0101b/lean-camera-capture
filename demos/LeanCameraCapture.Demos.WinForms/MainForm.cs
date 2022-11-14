@@ -119,12 +119,6 @@ namespace LeanCameraCapture.Demos.WinForms
         {
             Debug.WriteLine($"We got an error `{e.ErrorString}` with code `0x{e.HResult:X}`");
 
-            //MessageBox.Show(
-            //    $"Error during reading sample. code `0x{e.HResult:X}`\r\n" + e.ErrorString,
-            //    "Error",
-            //    MessageBoxButtons.OK,
-            //    MessageBoxIcon.Error);
-
             m_cameraReader?.ReadSample();
         }
 
