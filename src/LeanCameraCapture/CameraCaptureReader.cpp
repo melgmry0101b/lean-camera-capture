@@ -192,6 +192,8 @@ void CameraCaptureReader::ReadFrameSuccessNativeHandler(
 
     Marshal::Copy(System::IntPtr(const_cast<void *>(static_cast<const void *>(pbBuffer))), m_buffer, 0, bufferLen);
 
+    l.release();
+
     OnReadSampleSucceeded(this, gcnew ReadSampleSucceededEventArgs(
         m_buffer, widthInPixels, heightInPixels, bytesPerPixel
     ));
@@ -202,9 +204,6 @@ void CameraCaptureReader::ReadFrameFailNativeHandler(
     const std::string &errorString
 )
 {
-    // Lock
-    msclr::lock l{ m_lock };
-
     OnReadSampleFailed(this, gcnew ReadSampleFailedEventArgs(hr, gcnew System::String(errorString.c_str())));
 }
 

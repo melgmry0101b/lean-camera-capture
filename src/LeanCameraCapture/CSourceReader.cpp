@@ -137,26 +137,28 @@ HRESULT CSourceReader::OnReadSample(
         }
     }
 
-    if (m_pReadSampleSuccessCallback)
-    {
-        m_pReadSampleSuccessCallback(m_frameBuffer.get(), m_frameWidth, m_frameHeight, OUTPUT_BYTES_PER_PIXEL);
-    }
-
 done:
     SafeRelease(&pOutputSample);
     SafeRelease(&pBuffer);
 
-    if (FAILED(hr))
+    LeaveCriticalSection(&m_criticalSection);
+
+    _RPT1(_CRT_WARN, "Left critical section in %s.\n", STRINGIZE(OnReadSample));
+
+    if (SUCCEEDED(hr))
+    {
+        if (m_pReadSampleSuccessCallback)
+        {
+            m_pReadSampleSuccessCallback(m_frameBuffer.get(), m_frameWidth, m_frameHeight, OUTPUT_BYTES_PER_PIXEL);
+        }
+    }
+    else
     {
         if (m_pReadSampleFailCallback)
         {
             m_pReadSampleFailCallback(hr, exWhatString);
-        }
+        }        
     }
-
-    LeaveCriticalSection(&m_criticalSection);
-
-    _RPT1(_CRT_WARN, "Left critical section in %s.\n", STRINGIZE(OnReadSample));
 
     return hr;
 }
