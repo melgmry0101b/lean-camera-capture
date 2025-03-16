@@ -402,8 +402,8 @@ FodyWeavers.xsd
 #
 
 # Custom build artifacts
-.build/
-.output/
+__intermediates__/
+__output__/
 dist/
 
 # Log folder
